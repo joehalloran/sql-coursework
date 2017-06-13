@@ -91,8 +91,58 @@ limit 10;
 
 c) Which was the most prescribed medication across all practices?
 
-select treatment.bnf_code from treatment
-left join chemical on chemical.chem_sub_code = LEFT(treatment.bnf_code, 9);
+> Unique long bnf code
+
+select bnf_code, bnf_name, sum(items) as total from treatment group by bnf_code order by total desc limit 1;
+
++-----------------+-------------------------+---------+
+| bnf_code        | bnf_name                | total   |
++-----------------+-------------------------+---------+
+| 0103050P0AAAAAA | Omeprazole_Cap E/C 20mg | 4269629 |
++-----------------+-------------------------+---------+
+1 row in set (26.55 sec)
+
+> Unique shortened bnf_code (based from chemicals)
+
+select left(bnf_code,9) as sub_code, bnf_name, sum(items) as total from treatment group by sub_code order by total desc limit 1;
++-----------+----------------------+---------+
+| sub_code  | bnf_name             | total   |
++-----------+----------------------+---------+
+| 0212000Y0 | Simvastatin_Tab 40mg | 5116027 |
++-----------+----------------------+---------+
+
+> Number of times prescribed above
+
+select left(bnf_code,9) as sub_code, bnf_name, count(items) from treatment where left(bnf_code,9) = "0212000Y0" group by sub_code;
++-----------+----------------------+--------------+
+| sub_code  | bnf_name             | count(items) |
++-----------+----------------------+--------------+
+| 0212000Y0 | Simvastatin_Tab 40mg |        61442 |
++-----------+----------------------+--------------+
+
+> Different names
+
+select left(bnf_code,9) as sub_code, bnf_name, count(items) from treatment where left(bnf_code,9) = "0212000Y0" group by bnf_name;
++-----------+------------------------------------+--------------+
+| sub_code  | bnf_name                           | count(items) |
++-----------+------------------------------------+--------------+
+| 0212000Y0 | Simvador_Tab 10mg                  |          409 |
+| 0212000Y0 | Simvador_Tab 20mg                  |          757 |
+| 0212000Y0 | Simvador_Tab 40mg                  |         1020 |
+| 0212000Y0 | Simvador_Tab 80mg                  |           70 |
+| 0212000Y0 | Simvastatin_Liq Spec 40mg/5ml      |            1 |
+| 0212000Y0 | Simvastatin_Oral Susp 20mg/5ml S/F |          631 |
+| 0212000Y0 | Simvastatin_Oral Susp 40mg/5ml S/F |          946 |
+| 0212000Y0 | Simvastatin_Tab 10mg               |        14733 |
+| 0212000Y0 | Simvastatin_Tab 20mg               |        15650 |
+| 0212000Y0 | Simvastatin_Tab 40mg               |        15697 |
+| 0212000Y0 | Simvastatin_Tab 80mg               |        10203 |
+| 0212000Y0 | Zocor_Tab 10mg                     |          301 |
+| 0212000Y0 | Zocor_Tab 20mg                     |          534 |
+| 0212000Y0 | Zocor_Tab 40mg                     |          452 |
+| 0212000Y0 | Zocor_Tab 80mg                     |           38 |
++-----------+------------------------------------+--------------+
+15 rows in set (12.65 sec)
 
 d) Which practice spent the most and the least per patient?
 
@@ -110,12 +160,175 @@ select treatment.practice, round(sum(treatment.act_cost),2) as total, surgery_da
 
 e) What was the difference in selective serotonin reuptake inhibitor prescriptions between January and February?
 
-select period, count(bnf_name) as selective serotine from treatment where bnf_name like "%serotonin reuptake inhibitor%" group_by period;
+http://www.nhs.uk/conditions/SSRIs-(selective-serotonin-reuptake-inhibitors)/Pages/Introduction.aspx
+Types of SSRIs
+There are currently seven SSRIs prescribed in the UK:
+citalopram (Cipramil)
+dapoxetine (Priligy)
+escitalopram (Cipralex)
+fluoxetine (Prozac or Oxactin)
+fluvoxamine (Faverin)
+paroxetine (Seroxat)
+sertraline (Lustral)
+
+select count(items) as "Serotonin prescriptions", period as selective_serotonin from treatment where
+bnf_name like "%citalopram%" or
+bnf_name like "%Cipramil%" or
+bnf_name like "%dapoxetine%" or
+bnf_name like "%Priligy%" or
+bnf_name like "%escitalopram%" or
+bnf_name like "%Cipralex%" or
+bnf_name like "%fluoxetine%" or
+bnf_name like "%Prozac%" or
+bnf_name like "%Oxactin%" or
+bnf_name like "%fluvoxamine%" or
+bnf_name like "%Faverin%" or
+bnf_name like "%paroxetine%" or
+bnf_name like "%Seroxat%" or
+bnf_name like "%sertraline%" or
+bnf_name like "%Lustral%"
+group by period;
+
++-------------------------+---------------------+
+| Serotonin prescriptions | selective_serotonin |
++-------------------------+---------------------+
+|                   99715 | 201601              |
+|                   99215 | 201602              |
++-------------------------+---------------------+
+2 rows in set (27.70 sec)
+
+
+select sum(items) as "Serotonin prescriptions", period as selective_serotonin from treatment where
+bnf_name like "%citalopram%" or
+bnf_name like "%Cipramil%" or
+bnf_name like "%dapoxetine%" or
+bnf_name like "%Priligy%" or
+bnf_name like "%escitalopram%" or
+bnf_name like "%Cipralex%" or
+bnf_name like "%fluoxetine%" or
+bnf_name like "%Prozac%" or
+bnf_name like "%Oxactin%" or
+bnf_name like "%fluvoxamine%" or
+bnf_name like "%Faverin%" or
+bnf_name like "%paroxetine%" or
+bnf_name like "%Seroxat%" or
+bnf_name like "%sertraline%" or
+bnf_name like "%Lustral%"
+group by period;
+
++-------------------------+---------------------+
+| Serotonin prescriptions | selective_serotonin |
++-------------------------+---------------------+
+|                 2742049 | 201601              |
+|                 2725157 | 201602              |
++-------------------------+---------------------+
+2 rows in set (27.81 sec)
+
+
+
 
 f) Visualise the top 10 practices by number of metformin prescriptions throughout the entire period.
 
-select count(bnf_name) from treatment where bnf_name like "%metaformin%";
-select bnf_name from treatment where bnf_name like "%metformin%" group by practice;
+select practice, sum(items) as "metformin prescriptions" from treatment where bnf_name like "%metformin%" group by practice order by sum(items) desc limit 10;
++----------+-------------------------+
+| practice | metformin prescriptions |
++----------+-------------------------+
+| M85063   |                    3192 |
+| K83002   |                    2848 |
+| C82024   |                    2810 |
+| F84006   |                    2739 |
+| C83019   |                    2652 |
+| C83064   |                    2545 |
+| D82044   |                    2264 |
+| F84087   |                    2183 |
+| J82155   |                    2108 |
+| Y01008   |                    2083 |
++----------+-------------------------+
+
+
+10 rows in set (12.93 sec)
+
+select bnf_code, sum(items) as "metformin prescriptions", bnf_name from treatment where bnf_name like "%metformin%" group by bnf_name order by sum(items) desc;
++-----------------+-------------------------+------------------------------------------+
+| bnf_code        | metformin prescriptions | bnf_name                                 |
++-----------------+-------------------------+------------------------------------------+
+| 0601022B0AAABAB |                 2072307 | Metformin HCl_Tab 500mg                  |
+| 0601022B0AAASAS |                  459598 | Metformin HCl_Tab 500mg M/R              |
+| 0601022B0AAAVAV |                  254163 | Metformin HCl_Tab 1g M/R                 |
+| 0601022B0AAADAD |                  246856 | Metformin HCl_Tab 850mg                  |
+| 0601022B0AAATAT |                   31134 | Metformin HCl_Tab 750mg M/R              |
+| 0601023ADAAAAAA |                   19558 | Metformin HCl/Sitagliptin_Tab 1g/50mg    |
+| 0601023W0AAAAAA |                    9657 | Pioglitazone/Metformin HCl_Tab15mg/850mg |
+| 0601022B0AAARAR |                    8771 | Metformin HCl_Oral Soln 500mg/5ml S/F    |
+| 0601023Z0AAAAAA |                    8035 | Vildagliptin/Metformin HCl_Tab 50mg/1g   |
+| 0601023AFAAABAB |                    4900 | Linagliptin/Metformin_Tab 2.5mg/1g       |
+| 0601023AJAAAAAA |                    2846 | Alogliptin/Metformin_Tab 12.5mg/1g       |
+| 0601023Z0AAABAB |                    1984 | Vildagliptin/Metformin HCl_Tab50mg/850mg |
+| 0601023ALAAABAB |                    1533 | Dapagliflozin/Metformin_Tab 5mg/1g       |
+| 0601023AHAAABAB |                    1372 | Saxagliptin/Metformin_Tab 2.5mg/1g       |
+| 0601023AFAAAAAA |                     817 | Linagliptin/Metformin_Tab 2.5mg/850mg    |
+| 0601023APAAABAB |                     628 | Canagliflozin/Metformin_Tab 50mg/1g      |
+| 0601023AHAAAAAA |                     226 | Saxagliptin/Metformin_Tab 2.5mg/850mg    |
+| 0601023ALAAAAAA |                     209 | Dapagliflozin/Metformin_Tab 5mg/850mg    |
+| 0601023ARAAADAD |                     174 | Empagliflozin/Metformin_Tab 12.5mg/1g    |
+| 0601023APAAAAAA |                      95 | Canagliflozin/Metformin_Tab 50mg/850mg   |
+| 0601023ARAAABAB |                      90 | Empagliflozin/Metformin_Tab 5mg/1g       |
+| 0601022B0AAAIAI |                      38 | Metformin HCl_Liq Spec 500mg/5ml         |
+| 0601023ARAAACAC |                      29 | Empagliflozin/Metformin_Tab 12.5mg/850mg |
+| 0601022B0AAAXAX |                      22 | Metformin HCl_Pdr Sach 1g S/F            |
+| 0601023ARAAAAAA |                      16 | Empagliflozin/Metformin_Tab 5mg/850mg    |
+| 0601022B0AAAWAW |                       8 | Metformin HCl_Pdr Sach 500mg S/F         |
+| 0601022B0AAANAN |                       1 | Metformin HCl_Liq Spec 5mg/5ml           |
++-----------------+-------------------------+------------------------------------------+
+27 rows in set (13.04 sec)
+
+
+select left(bnf_code,9) , sum(items) as "metformin prescriptions" from treatment where bnf_name like "%metformin%" group by left(bnf_code,9) order by sum(items) desc;
++------------------+-------------------------+
+| left(bnf_code,9) | metformin prescriptions |
++------------------+-------------------------+
+| 0601022B0        |                 3072898 |
+| 0601023AD        |                   19558 |
+| 0601023Z0        |                   10019 |
+| 0601023W0        |                    9657 |
+| 0601023AF        |                    5717 |
+| 0601023AJ        |                    2846 |
+| 0601023AL        |                    1742 |
+| 0601023AH        |                    1598 |
+| 0601023AP        |                     723 |
+| 0601023AR        |                     309 |
++------------------+-------------------------+
+10 rows in set (13.00 sec)
+
+select practice, sum(items) as "metformin prescriptions" from treatment where
+left(bnf_code, 9) = "0601022B0" or
+left(bnf_code, 9) = "0601023AD" or
+left(bnf_code, 9) = "0601023Z0" or
+left(bnf_code, 9) = "0601023W0" or
+left(bnf_code, 9) = "0601023AF" or
+left(bnf_code, 9) = "0601023AJ" or
+left(bnf_code, 9) = "0601023AH" or
+left(bnf_code, 9) = "0601023AL" or
+left(bnf_code, 9) = "0601023AP" or
+left(bnf_code, 9) = "0601023AR"
+group by practice order by sum(items) desc limit 10;
++----------+-------------------------+
+| practice | metformin prescriptions |
++----------+-------------------------+
+| M85063   |                    3254 |
+| K83002   |                    2943 |
+| C82024   |                    2840 |
+| F84006   |                    2745 |
+| C83019   |                    2668 |
+| C83064   |                    2560 |
+| D82044   |                    2359 |
+| F84087   |                    2183 |
+| J82155   |                    2113 |
+| Y01008   |                    2094 |
++----------+-------------------------+
+10 rows in set (18.51 sec)
+
+
 
 ## Task 4: Observations of Database
 
