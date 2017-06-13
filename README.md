@@ -24,7 +24,7 @@ For the reasons outlined above (isolated, replicable, and automated). I created 
 
 I then wanted to create a script that would set up the database and populate the tables with data from the spreadsheet files provided for the task. I decided to use the Python SQL Alchemy module *(SQL Alchemy - The Database Toolkit for Python (2017))*, which provides an ORM. This is a useful means of  visualising the database by creating tables as Python classes.
 
-I created two scripts `database_setup.py` (creates tables) and `populate_db.py` (parses csv files and uploads to databases). This allowed me to search for and eliminate duplicates (for instance in the two files that list all registered gp surgeries, the files where >99% duplicate).
+I created two scripts `database_setup.py` (creates tables) and `populate_db.py` (parses csv files and uploads to databases). This allowed me to search for and eliminate duplicates (for instance in the two files that list all registered gp surgeries, were >99% duplicated).
 
 The one great drawback of this approach was the time it took to run the `populate_db.py` script. It took over 8 hours!! to complete the process of populating the tables with data. This is for a number of reasons:
 1. The sheer scale of the data: two of the csv files where 1.4GB.
@@ -32,31 +32,42 @@ The one great drawback of this approach was the time it took to run the `populat
 3. The extra cost of using an ORM tool: SQL Alchemy added an extra layer of complexity.
 4. Some data integrity vs speed trade-offs in the `populate_db.py` code: For instance, the `session.commit()` command, which commits changes to the database, is run after every line in the csv file is parsed. This could have been run only at the end of the file, or after *x* lines are parsed, to reduce the number of commits and therefore execution time. However, this would create a risk of data loss if the program terminated before reaching the end of the file or *x* lines.
 
-Despite this huge time delay, these files provided a reliable, automated, and replicable means of creating the databases.
+Despite this huge time delay, these process provided a reliable, mainly automated, and replicable means of creating the databases.
 
-# questions
+## Task 3: TITLE HERE //Todo
 
 ## a) How many practices and registered patients are there in the N17 postcode Area?
-http://releases.ubuntu.com/14.04/
+
+There are 7 surgeries in the N17 area with 52248 patients
+
+### Queries:
+```
 SELECT COUNT(postcode) from surgery where postcode like "n17%"
+
 +-----------------+
 | COUNT(postcode) |
 +-----------------+
 |               7 |
 +-----------------+
 1 row in set (0.01 sec)
+```
 
-
+```
 select sum(totalAll) from surgery_data where postcode LIKE "N17%";
+
 +---------------+
 | sum(totalAll) |
-+---------------+http://releases.ubuntu.com/14.04/
++---------------+
 |         52248 |
 +---------------+
 1 row in set (0.01 sec)
+```
 
+### Observations
 
-> Note discrepancy in practice IDs in tables
+There was discrepency in the practice ids is in the surgery_data table and the surgery table.
+// TODO
+
 
 select totalAll, practice from surgery_data where
 practice = "F85017" or
@@ -72,6 +83,7 @@ practice = "Y04848";
 
 http://www.nhs.uk/conditions/beta-blockers/pages/introduction.aspx
 
+```
 select practice, sum(items) as "beta-blockers" from treatment where
 bnf_name like "%atenolol%" or
 bnf_name like "%Tenormin%" or
@@ -87,11 +99,13 @@ bnf_name like "%Nebilet%" or
 bnf_name like "%Inderal%"
 group by practice
 limit 10;
+```
 
 ## c) Which was the most prescribed medication across all practices?
 
 > Unique long bnf code
 
+```
 select bnf_code, bnf_name, sum(items) as total from treatment group by bnf_code order by total desc limit 1;
 
 +-----------------+-------------------------+---------+
@@ -100,28 +114,37 @@ select bnf_code, bnf_name, sum(items) as total from treatment group by bnf_code 
 | 0103050P0AAAAAA | Omeprazole_Cap E/C 20mg | 4269629 |
 +-----------------+-------------------------+---------+
 1 row in set (26.55 sec)
+```
 
 > Unique shortened bnf_code (based from chemicals)
 
+```
 select left(bnf_code,9) as sub_code, bnf_name, sum(items) as total from treatment group by sub_code order by total desc limit 1;
+
 +-----------+----------------------+---------+
 | sub_code  | bnf_name             | total   |
 +-----------+----------------------+---------+
 | 0212000Y0 | Simvastatin_Tab 40mg | 5116027 |
 +-----------+----------------------+---------+
+```
 
 > Number of times prescribed above
 
+```
 select left(bnf_code,9) as sub_code, bnf_name, count(items) from treatment where left(bnf_code,9) = "0212000Y0" group by sub_code;
+
 +-----------+----------------------+--------------+
 | sub_code  | bnf_name             | count(items) |
 +-----------+----------------------+--------------+
 | 0212000Y0 | Simvastatin_Tab 40mg |        61442 |
 +-----------+----------------------+--------------+
+```
 
 > Different names
 
+```
 select left(bnf_code,9) as sub_code, bnf_name, count(items) from treatment where left(bnf_code,9) = "0212000Y0" group by bnf_name;
+
 +-----------+------------------------------------+--------------+
 | sub_code  | bnf_name                           | count(items) |
 +-----------+------------------------------------+--------------+
@@ -142,9 +165,11 @@ select left(bnf_code,9) as sub_code, bnf_name, count(items) from treatment where
 | 0212000Y0 | Zocor_Tab 80mg                     |           38 |
 +-----------+------------------------------------+--------------+
 15 rows in set (12.65 sec)
+```
 
 ## d) Which practice spent the most and the least per patient?
 
+```
 select practice, round(sum(act_cost),2) as total from treatment group by practice order by sum(act_cost) desc limit 1;
 +----------+------------+
 | practice | total      |
@@ -152,8 +177,6 @@ select practice, round(sum(act_cost),2) as total from treatment group by practic
 | M85063   | 1638640.13 |
 +----------+------------+
 1 row in set (16.98 sec)
-
-select treatment.practice, round(sum(treatment.act_cost),2) as total, surgery_data.totalAll from treatment inner join surgery_data on treatment.practice = surgery_data.practice group by treatment.practice order by total desc limit 1;
 
 select treatment.practice, round(sum(treatment.act_cost),2) as total, surgery_data.totalAll from treatment inner join surgery_data on treatment.practice = surgery_data.practice group by treatment.practice order by total desc limit 1;
 +----------+------------+----------+
@@ -171,9 +194,26 @@ select sum(treatment.act_cost) as total, surgery_data.totalAll, (sum(treatment.a
 +--------------------+----------+--------------------+
 1 row in set (11.63 sec)
 
-1 row in set (0.00 sec)
 
 select sum(treatment.act_cost) as total, surgery_data.totalAll, (sum(treatment.act_cost)/surgery_data.totalAll) as "Average" from surgery_data inner join treatment on treatment.practice = surgery_data.practice group by treatment.practice order by Average limit 10;
++--------------------+----------+----------------------+
+| total              | totalAll | Average              |
++--------------------+----------+----------------------+
+| 50.740000396966934 |     3777 | 0.013433942387335699 |
+|   33.8699996471405 |     1883 | 0.017987254193914233 |
+|  2.569999933242798 |       90 | 0.028555554813808864 |
+| 14.989999771118164 |      285 | 0.052596490424976015 |
+| 101.61999946832657 |     1499 |  0.06779186088614181 |
+|  277.7500001192093 |     2308 |  0.12034228774662448 |
+| 2728.3400220274925 |    13716 |  0.19891659536508402 |
+|  389.9899954199791 |     1847 |  0.21114780477529999 |
+|  84.33999973535538 |      325 |  0.25950769149340114 |
+|  644.0400002002716 |     1779 |   0.3620236088815467 |
++--------------------+----------+----------------------+
+10 rows in set (1 hour 47 min 56.30 sec)
+
+mysql> select treatment.practice, sum(treatment.act_cost) as total, surgery_data.totalAll, (sum(treatment.act_cost)/surgery_data.totalAll) as "Average" from surgery_data inner join treatment on treatment.practice = surgery_data.practice group by treatment.practice order by Average limit 10;
+```
 
 
 ## e) What was the difference in selective serotonin reuptake inhibitor prescriptions between January and February?
@@ -189,6 +229,7 @@ fluvoxamine (Faverin)
 paroxetine (Seroxat)
 sertraline (Lustral)
 
+```
 select count(items) as "Serotonin prescriptions", period as selective_serotonin from treatment where
 bnf_name like "%citalopram%" or
 bnf_name like "%Cipramil%" or
@@ -214,7 +255,6 @@ group by period;
 |                   99215 | 201602              |
 +-------------------------+---------------------+
 2 rows in set (27.70 sec)
-
 
 select sum(items) as "Serotonin prescriptions", period as selective_serotonin from treatment where
 bnf_name like "%citalopram%" or
@@ -242,11 +282,12 @@ group by period;
 +-------------------------+---------------------+
 2 rows in set (27.81 sec)
 
-
+```
 
 
 f) Visualise the top 10 practices by number of metformin prescriptions throughout the entire period.
 
+```
 select practice, sum(items) as "metformin prescriptions" from treatment where bnf_name like "%metformin%" group by practice order by sum(items) desc limit 10;
 +----------+-------------------------+
 | practice | metformin prescriptions |
@@ -345,7 +386,7 @@ group by practice order by sum(items) desc limit 10;
 | Y01008   |                    2094 |
 +----------+-------------------------+
 10 rows in set (18.51 sec)
-
+```
 
 
 ## Task 4: Observations of Database
