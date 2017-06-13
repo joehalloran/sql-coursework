@@ -34,9 +34,9 @@ The one great drawback of this approach was the time it took to run the `populat
 
 Despite this huge time delay, these files provided a reliable, automated, and replicable means of creating the databases.
 
-## questions
+# questions
 
-a) How many practices and registered patients are there in the N17 postcode Area?
+## a) How many practices and registered patients are there in the N17 postcode Area?
 http://releases.ubuntu.com/14.04/
 SELECT COUNT(postcode) from surgery where postcode like "n17%"
 +-----------------+
@@ -68,8 +68,7 @@ practice = "F85628" or
 practice = "Y04848";
 
 
-http://releases.ubuntu.com/14.04/
-b) Which practice prescribed the most beta blockers per registered patients in total over the two month period?
+## b) Which practice prescribed the most beta blockers per registered patients in total over the two month period?
 
 http://www.nhs.uk/conditions/beta-blockers/pages/introduction.aspx
 
@@ -89,7 +88,7 @@ bnf_name like "%Inderal%"
 group by practice
 limit 10;
 
-c) Which was the most prescribed medication across all practices?
+## c) Which was the most prescribed medication across all practices?
 
 > Unique long bnf code
 
@@ -144,7 +143,7 @@ select left(bnf_code,9) as sub_code, bnf_name, count(items) from treatment where
 +-----------+------------------------------------+--------------+
 15 rows in set (12.65 sec)
 
-d) Which practice spent the most and the least per patient?
+## d) Which practice spent the most and the least per patient?
 
 select practice, round(sum(act_cost),2) as total from treatment group by practice order by sum(act_cost) desc limit 1;
 +----------+------------+
@@ -156,9 +155,28 @@ select practice, round(sum(act_cost),2) as total from treatment group by practic
 
 select treatment.practice, round(sum(treatment.act_cost),2) as total, surgery_data.totalAll from treatment inner join surgery_data on treatment.practice = surgery_data.practice group by treatment.practice order by total desc limit 1;
 
+select treatment.practice, round(sum(treatment.act_cost),2) as total, surgery_data.totalAll from treatment inner join surgery_data on treatment.practice = surgery_data.practice group by treatment.practice order by total desc limit 1;
++----------+------------+----------+
+| practice | total      | totalAll |
++----------+------------+----------+
+| M85063   | 1638640.13 |    60352 |
++----------+------------+----------+
+1 row in set (1 hour 40 min 41.92 sec)
+
+select sum(treatment.act_cost) as total, surgery_data.totalAll, (sum(treatment.act_cost)/surgery_data.totalAll) as "Average" from surgery_data inner join treatment on treatment.practice = surgery_data.practice where treatment.practice = "M85063";
++--------------------+----------+--------------------+
+| total              | totalAll | Average            |
++--------------------+----------+--------------------+
+| 1638640.1302093118 |    60352 | 27.151380736501057 |
++--------------------+----------+--------------------+
+1 row in set (11.63 sec)
+
+1 row in set (0.00 sec)
+
+select sum(treatment.act_cost) as total, surgery_data.totalAll, (sum(treatment.act_cost)/surgery_data.totalAll) as "Average" from surgery_data inner join treatment on treatment.practice = surgery_data.practice group by treatment.practice order by Average limit 10;
 
 
-e) What was the difference in selective serotonin reuptake inhibitor prescriptions between January and February?
+## e) What was the difference in selective serotonin reuptake inhibitor prescriptions between January and February?
 
 http://www.nhs.uk/conditions/SSRIs-(selective-serotonin-reuptake-inhibitors)/Pages/Introduction.aspx
 Types of SSRIs
