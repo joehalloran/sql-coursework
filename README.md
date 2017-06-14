@@ -101,6 +101,39 @@ group by practice
 limit 10;
 ```
 
+select treatment.practice as "GP id", sum(treatment.items) as "Total beta-blockers", surgery_data.totalAll as "total patients", (sum(treatment.items)/surgery_data.totalAll) as "Average" from surgery_data inner join treatment on treatment.practice = surgery_data.practice
+where
+bnf_name like "%atenolol%" or
+bnf_name like "%Tenormin%" or
+bnf_name like "%bisoprolol%" or
+bnf_name like "%Cardicor%" or
+bnf_name like "%Emcor%" or
+bnf_name like "%carvedilol%" or
+bnf_name like "%toprolol%" or
+bnf_name like "%Betaloc%" or
+bnf_name like "%Lopresor%" or
+bnf_name like "%nebivolol%" or
+bnf_name like "%Nebilet%" or
+bnf_name like "%Inderal%"
+group by treatment.practice order by Average desc limit 10;
+
++--------+---------------------+----------------+---------+
+| GP id  | Total beta-blockers | total patients | Average |
++--------+---------------------+----------------+---------+
+| G82651 |                  12 |              1 | 12.0000 |
+| Y04786 |                 609 |            316 |  1.9272 |
+| B86674 |                  12 |             20 |  0.6000 |
+| E87711 |                 167 |            284 |  0.5880 |
+| Y02511 |                 339 |            710 |  0.4775 |
+| B81683 |                 662 |           1727 |  0.3833 |
+| A89040 |                1002 |           2902 |  0.3453 |
+| Y02625 |                 378 |           1095 |  0.3452 |
+| C88626 |                 538 |           1599 |  0.3365 |
+| Y00081 |                  12 |             37 |  0.3243 |
++--------+---------------------+----------------+---------+
+10 rows in set (2 min 8.14 sec)
+
+
 ## c) Which was the most prescribed medication across all practices?
 
 > Unique long bnf code
@@ -195,25 +228,70 @@ select sum(treatment.act_cost) as total, surgery_data.totalAll, (sum(treatment.a
 1 row in set (11.63 sec)
 
 
-select sum(treatment.act_cost) as total, surgery_data.totalAll, (sum(treatment.act_cost)/surgery_data.totalAll) as "Average" from surgery_data inner join treatment on treatment.practice = surgery_data.practice group by treatment.practice order by Average limit 10;
-+--------------------+----------+----------------------+
-| total              | totalAll | Average              |
-+--------------------+----------+----------------------+
-| 50.740000396966934 |     3777 | 0.013433942387335699 |
-|   33.8699996471405 |     1883 | 0.017987254193914233 |
-|  2.569999933242798 |       90 | 0.028555554813808864 |
-| 14.989999771118164 |      285 | 0.052596490424976015 |
-| 101.61999946832657 |     1499 |  0.06779186088614181 |
-|  277.7500001192093 |     2308 |  0.12034228774662448 |
-| 2728.3400220274925 |    13716 |  0.19891659536508402 |
-|  389.9899954199791 |     1847 |  0.21114780477529999 |
-|  84.33999973535538 |      325 |  0.25950769149340114 |
-|  644.0400002002716 |     1779 |   0.3620236088815467 |
-+--------------------+----------+----------------------+
-10 rows in set (1 hour 47 min 56.30 sec)
+select treatment.practice, sum(treatment.act_cost) as total, surgery_data.totalAll, (sum(treatment.act_cost)/surgery_data.totalAll) as "Average" from surgery_data inner join treatment on treatment.practice = surgery_data.practice group by treatment.practice order by Average limit 10;
++----------+--------------------+----------+----------------------+
+| practice | total              | totalAll | Average              |
++----------+--------------------+----------+----------------------+
+| Y01690   | 50.740000396966934 |     3777 | 0.013433942387335699 |
+| N82647   |   33.8699996471405 |     1883 | 0.017987254193914233 |
+| E87718   |  2.569999933242798 |       90 | 0.028555554813808864 |
+| E87055   | 14.989999771118164 |      285 | 0.052596490424976015 |
+| L85602   | 101.61999946832657 |     1499 |  0.06779186088614181 |
+| M82612   |  277.7500001192093 |     2308 |  0.12034228774662448 |
+| N81634   | 2728.3400220274925 |    13716 |  0.19891659536508402 |
+| F84727   |  389.9899954199791 |     1847 |  0.21114780477529999 |
+| Y02988   |  84.33999973535538 |      325 |  0.25950769149340114 |
+| N85643   |  644.0400002002716 |     1779 |   0.3620236088815467 |
++----------+--------------------+----------+----------------------+
+10 rows in set (1 hour 38 min 38.25 sec)
 
-mysql> select treatment.practice, sum(treatment.act_cost) as total, surgery_data.totalAll, (sum(treatment.act_cost)/surgery_data.totalAll) as "Average" from surgery_data inner join treatment on treatment.practice = surgery_data.practice group by treatment.practice order by Average limit 10;
+> Y01690 Only prescribed 2 items in Feb 2016
+select sum(items), sum(act_cost), period from treatment where practice = "Y01690" group by period;
++------------+-------------------+--------+
+| sum(items) | sum(act_cost)     | period |
++------------+-------------------+--------+
+|         21 | 46.29000046849251 | 201601 |
+|          2 | 4.449999928474426 | 201602 |
++------------+-------------------+--------+
+2 rows in set (13.11 sec)
+
+select gp_id, name, postcode from surgery where gp_id = "Y01690";
++--------+--------------------------+----------+
+| gp_id  | name                     | postcode |
++--------+--------------------------+----------+
+| Y01690 | SCHOOL LANE PMS PRACTICE | IP24 2AG |
++--------+--------------------------+----------+
+1 row in set (0.01 sec)
+
+> Only 1 patient
+
+select treatment.practice, sum(treatment.act_cost) as total, surgery_data.totalAll, (sum(treatment.act_cost)/surgery_data.totalAll) as "Average" from surgery_data inner join treatment on treatment.practice = surgery_data.practice group by treatment.practice order by Average desc limit 10;
++----------+--------------------+----------+--------------------+
+| practice | total              | totalAll | Average            |
++----------+--------------------+----------+--------------------+
+| G82651   |  7609.050047278404 |        1 |  7609.050047278404 |
+| Y02045   | 19572.239992558956 |        4 |  4893.059998139739 |
+| Y01924   | 147981.80988019705 |      112 | 1321.2661596446164 |
+| Y02873   | 10717.569992467761 |       20 |   535.878499623388 |
+| Y02507   | 475.95999723672867 |        2 | 237.97999861836433 |
+| Y02508   |  3333.070020824671 |       15 | 222.20466805497804 |
+| Y04786   |  68229.09005251527 |      316 | 215.91484193833946 |
+| Y02625   | 209576.74016997218 |     1095 | 191.39428326024856 |
+| Y02511   |  131495.9803173244 |      710 |  185.2056060807386 |
+| E87711   |  34552.28004068136 |      284 |  121.6629578897231 |
++----------+--------------------+----------+--------------------+
+10 rows in set (1 hour 40 min 47.78 sec)
+
+select gp_id, name, postcode from surgery where gp_id = "G82651";
++--------+------------------------+----------+
+| gp_id  | name                   | postcode |
++--------+------------------------+----------+
+| G82651 | BURRSWOOD NURSING HOME | TN3 9PY  |
++--------+------------------------+----------+
+1 row in set (0.00 sec)
 ```
+http://www.burrswood.org.uk/
+Mixture of priavte and NHS patients, may mean 1 patient with complex needs.
 
 
 ## e) What was the difference in selective serotonin reuptake inhibitor prescriptions between January and February?
