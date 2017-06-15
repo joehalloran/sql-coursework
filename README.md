@@ -16,11 +16,11 @@ Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor 
 
 The data we are handling is historical, and therefore very unlikely to be altered (unless of course some new data was discovered in a dusty filing cabinet in a rarely visited hospital wing). Therefore we can treat the data as effectively static.
 
-With this in mind, I wanted to create an isolated and automated (where possible) means of setting up the database, so it could be easily rebuilt if problems were discovered in the configuration.
+With this in mind and safe in the knowledge we do not need to worry about additions to the data, I wanted to create an isolated and automated (where possible) means of setting up the database, so it could be easily rebuilt if problems were discovered in the configuration.
 
 A full description of the process, including scripts written is included as an appendix. In addition, you can find a summary of the process below.
 
-For the reasons outlined above (isolated, replicable, and automated). I created a virtual server using Vagrant *(Vagrant by Hashicorp (2017))* running Ubuntu 14.04 server addition *Ubuntu 14.04.5 LTS (2017)*. I then set up a LAMP server *(LAMP (software bundle) - Wikipedia (2017))*, created an Apache web server and installed phpmyadmin *(How to install phpmyadmin on ubuntu - Liquid Web (2017))*.
+For the reasons outlined above (isolated, replicable, and automated). I created a virtual server using Vagrant *(Vagrant by Hashicorp (2017))* running Ubuntu 14.04 server addition *Ubuntu 14.04.5 LTS (2017)*. I then set up a LAMP server *(LAMP (software bundle) - Wikipedia (2017))* and installed phpmyadmin *(How to install phpmyadmin on ubuntu - Liquid Web (2017))* to give me GUI access to the DB.
 
 I then wanted to create a script that would set up the database and populate the tables with data from the spreadsheet files provided for the task. I decided to use the Python SQL Alchemy module *(SQL Alchemy - The Database Toolkit for Python (2017))*, which provides an ORM. This is a useful means of  visualising the database by creating tables as Python classes.
 
@@ -29,18 +29,18 @@ I created two scripts `database_setup.py` (creates tables) and `populate_db.py` 
 The one great drawback of this approach was the time it took to run the `populate_db.py` script. It took over 8 hours!! to complete the process of populating the tables with data. This is for a number of reasons:
 1. The sheer scale of the data: two of the csv files where 1.4GB.
 2. Limited hardware resources made available to the virtual mysql server: for instance, it had access to only 512MB of ram on the host machine.
-3. The extra cost of using an ORM tool: SQL Alchemy added an extra layer of complexity.
+3. The extra cost of using an ORM tool: SQL Alchemy added an extra layer of abstraction.
 4. Some data integrity vs speed trade-offs in the `populate_db.py` code: For instance, the `session.commit()` command, which commits changes to the database, is run after every line in the csv file is parsed. This could have been run only at the end of the file, or after *x* lines are parsed, to reduce the number of commits and therefore execution time. However, this would create a risk of data loss if the program terminated before reaching the end of the file or *x* lines.
 
 Despite this huge time delay, these process provided a reliable, mainly automated, and replicable means of creating the databases.
 
-## Task 3: TITLE HERE //Todo
+## Task 3: Database queries
 
 ## a) How many practices and registered patients are there in the N17 postcode Area?
 
 There are 7 surgeries in the N17 area with 52248 patients
 
-### Queries:
+*Queries:*
 ```
 SELECT COUNT(postcode) from surgery where postcode like "n17%"
 
@@ -63,45 +63,23 @@ select sum(totalAll) from surgery_data where postcode LIKE "N17%";
 1 row in set (0.01 sec)
 ```
 
-### Observations
-
-There was discrepency in the practice ids is in the surgery_data table and the surgery table.
-// TODO
-
-
-select totalAll, practice from surgery_data where
-practice = "F85017" or
-practice = "F85019" or
-practice = "F85028" or
-practice = "F85030" or
-practice = "F85615" or
-practice = "F85628" or
-practice = "Y04848";
-
-
 ## b) Which practice prescribed the most beta blockers per registered patients in total over the two month period?
 
-http://www.nhs.uk/conditions/beta-blockers/pages/introduction.aspx
+This queries requires a definition of "beta-blockers", which was found here:
+(Commonly use beta-blockers - NHS)[http://www.nhs.uk/conditions/beta-blockers/pages/introduction.aspx]
+
+The term "prescribed the most" also requires some consideration. If we are counting the number of times a beta-blockers was prescribed we would have to look at the 'items' column. If we were looking at the sheer amount of drugs that was given to patients, we should look at 'quantity'. My gut instinct lead me to look at the number of prescriptions and therefore focus on a sum of 'items'.
+
+I also decided to return the top 10 practices, to see if the top item is an outlier.
 
 ```
-select practice, sum(items) as "beta-blockers" from treatment where
-bnf_name like "%atenolol%" or
-bnf_name like "%Tenormin%" or
-bnf_name like "%bisoprolol%" or
-bnf_name like "%Cardicor%" or
-bnf_name like "%Emcor%" orhttp://releases.ubuntu.com/14.04/
-bnf_name like "%carvedilol%" or
-bnf_name like "%toprolol%" or
-bnf_name like "%Betaloc%" or
-bnf_name like "%Lopresor%" or
-bnf_name like "%nebivolol%" or
-bnf_name like "%Nebilet%" or
-bnf_name like "%Inderal%"
-group by practice
-limit 10;
-```
-
-select treatment.practice as "GP id", sum(treatment.items) as "Total beta-blockers", surgery_data.totalAll as "total patients", (sum(treatment.items)/surgery_data.totalAll) as "Average" from surgery_data inner join treatment on treatment.practice = surgery_data.practice
+select
+treatment.practice as "GP id",
+sum(treatment.items) as "Total beta-blockers",
+surgery_data.totalAll as "total patients",
+(sum(treatment.items)/surgery_data.totalAll) as "Average"
+from surgery_data
+inner join treatment on treatment.practice = surgery_data.practice
 where
 bnf_name like "%atenolol%" or
 bnf_name like "%Tenormin%" or
@@ -115,7 +93,9 @@ bnf_name like "%Lopresor%" or
 bnf_name like "%nebivolol%" or
 bnf_name like "%Nebilet%" or
 bnf_name like "%Inderal%"
-group by treatment.practice order by Average desc limit 10;
+group by treatment.practice
+order by Average desc
+limit 10;
 
 +--------+---------------------+----------------+---------+
 | GP id  | Total beta-blockers | total patients | Average |
@@ -132,22 +112,41 @@ group by treatment.practice order by Average desc limit 10;
 | Y00081 |                  12 |             37 |  0.3243 |
 +--------+---------------------+----------------+---------+
 10 rows in set (2 min 8.14 sec)
+```
+
+As suspected the top item is a bit of anomaly, with only one patient. Further investigate revealed G82651 is a private nursing *(Burrswood nursing home (2017))* home that accepts a small number of NHS patients, this explains the one patient.
+
+```
+select gp_id, name, postcode from surgery where gp_id = "G82651";
++--------+------------------------+----------+
+| gp_id  | name                   | postcode |
++--------+------------------------+----------+
+| G82651 | BURRSWOOD NURSING HOME | TN3 9PY  |
++--------+------------------------+----------+
+1 row in set (0.00 sec)
+```
 
 
 ## c) Which was the most prescribed medication across all practices?
 
-> Unique long bnf code
+As with question b, the term "most prescribed" requires technical definition. For consistency, I stuck with summing values in the 'item' columns.
+
+The term "prescribed medication" also requires unpicking. I first grouped by "bnf_code".
 
 ```
 select bnf_code, bnf_name, sum(items) as total from treatment group by bnf_code order by total desc limit 1;
-
 +-----------------+-------------------------+---------+
 | bnf_code        | bnf_name                | total   |
 +-----------------+-------------------------+---------+
 | 0103050P0AAAAAA | Omeprazole_Cap E/C 20mg | 4269629 |
 +-----------------+-------------------------+---------+
+
 1 row in set (26.55 sec)
 ```
+
+However a BNF code describes a particalur drug at particular dosage and in a particalur form. This seemed too narrow, as the same drug, when prescribed in different forms and at quantities, is counted separately.
+
+For this reason, and after looking the Chemical table, I decided the look at the first 9 characters of the bnf code. This appears to be a base code for drugs of the same type. This gave me a final result of:
 
 > Unique shortened bnf_code (based from chemicals)
 
@@ -161,19 +160,7 @@ select left(bnf_code,9) as sub_code, bnf_name, sum(items) as total from treatmen
 +-----------+----------------------+---------+
 ```
 
-> Number of times prescribed above
-
-```
-select left(bnf_code,9) as sub_code, bnf_name, count(items) from treatment where left(bnf_code,9) = "0212000Y0" group by sub_code;
-
-+-----------+----------------------+--------------+
-| sub_code  | bnf_name             | count(items) |
-+-----------+----------------------+--------------+
-| 0212000Y0 | Simvastatin_Tab 40mg |        61442 |
-+-----------+----------------------+--------------+
-```
-
-> Different names
+Digging a little further, I found that this drug came in a variety of names and quantities:
 
 ```
 select left(bnf_code,9) as sub_code, bnf_name, count(items) from treatment where left(bnf_code,9) = "0212000Y0" group by bnf_name;
@@ -246,7 +233,7 @@ select treatment.practice, sum(treatment.act_cost) as total, surgery_data.totalA
 10 rows in set (1 hour 38 min 38.25 sec)
 
 > Y01690 Only prescribed 2 items in Feb 2016
-select sum(items), sum(act_cost), period from treatment where practice = "Y01690" group by period;
+select sum(items), sum(act_c* ost), period from treatment where practice = "Y01690" group by period;
 +------------+-------------------+--------+
 | sum(items) | sum(act_cost)     | period |
 +------------+-------------------+--------+
@@ -290,8 +277,6 @@ select gp_id, name, postcode from surgery where gp_id = "G82651";
 +--------+------------------------+----------+
 1 row in set (0.00 sec)
 ```
-http://www.burrswood.org.uk/
-Mixture of priavte and NHS patients, may mean 1 patient with complex needs.
 
 
 ## e) What was the difference in selective serotonin reuptake inhibitor prescriptions between January and February?
@@ -469,7 +454,21 @@ group by practice order by sum(items) desc limit 10;
 
 ## Task 4: Observations of Database
 
-- Different postcodes in two databases in task 1
+### Task 3.a
+
+There was discrepency in the practice ids is in the surgery_data table and the surgery table.
+// TODO
+
+
+select totalAll, practice from surgery_data where
+practice = "F85017" or
+practice = "F85019" or
+practice = "F85028" or
+practice = "F85030" or
+practice = "F85615" or
+practice = "F85628" or
+practice = "Y04848";
+
 
 # Refs
 
@@ -498,6 +497,9 @@ https://httpd.apache.org/ (Accessed: 13th June 2017)
 * SQL Alchemy - The Database Toolkit for Python (2017). Available at:<br />
 https://www.sqlalchemy.org/ (Accessed: 13th June 2017)
 
+* http://www.nhs.uk/conditions/beta-blockers/pages/introduction.aspx
+
+* http://www.burrswood.org.uk/
 
 # Set up
 
