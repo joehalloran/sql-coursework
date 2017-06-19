@@ -36,11 +36,10 @@ Despite this huge time delay, these process provided a reliable, mainly automate
 
 ## Task 3: Database queries
 
-## a) How many practices and registered patients are there in the N17 postcode Area?
+### a) How many practices and registered patients are there in the N17 postcode Area?
 
-There are 7 surgeries in the N17 area with 52248 patients
+This could be answered using the following queries.
 
-*Queries:*
 ```
 SELECT COUNT(postcode) from surgery where postcode like "n17%"
 
@@ -63,12 +62,14 @@ select sum(totalAll) from surgery_data where postcode LIKE "N17%";
 1 row in set (0.01 sec)
 ```
 
+### Final Answer
+There are 7 surgeries in the N17 area with 52248 patients
+
 ## b) Which practice prescribed the most beta blockers per registered patients in total over the two month period?
 
-This queries requires a definition of "beta-blockers", which was found here:
-(Commonly use beta-blockers - NHS)[http://www.nhs.uk/conditions/beta-blockers/pages/introduction.aspx]
+This queries requires a definition of "beta-blockers". A list was found on the NHS choices website *(Beta-blockers - NHS Choices (2017))*.
 
-The term "prescribed the most" also requires some consideration. If we are counting the number of times a beta-blockers was prescribed we would have to look at the 'items' column. If we were looking at the sheer amount of drugs that was given to patients, we should look at 'quantity'. My gut instinct lead me to look at the number of prescriptions and therefore focus on a sum of 'items'.
+The term "prescribed the most" also requires some consideration. If we are counting the number of times a beta-blockers was prescribed we would have to look at the 'items' column. If we were looking at the sheer amount of drugs that was given to patients, we should look at 'quantity'. I felt focussing on the sum of 'items' would best reflect the question.
 
 I also decided to return the top 10 practices, to see if the top item is an outlier.
 
@@ -114,7 +115,7 @@ limit 10;
 10 rows in set (2 min 8.14 sec)
 ```
 
-As suspected the top item is a bit of anomaly, with only one patient. Further investigate revealed G82651 is a private nursing *(Burrswood nursing home (2017))* home that accepts a small number of NHS patients, this explains the one patient.
+As suspected the top item is an anomaly, with only one patient. Further investigate revealed G82651 is a private nursing *(Burrswood nursing home (2017))* home that accepts some NHS patients, this explains the one patient.
 
 ```
 select gp_id, name, postcode from surgery where gp_id = "G82651";
@@ -125,6 +126,10 @@ select gp_id, name, postcode from surgery where gp_id = "G82651";
 +--------+------------------------+----------+
 1 row in set (0.00 sec)
 ```
+
+### Final answer
+
+Burrswood Nursing home.
 
 
 ## c) Which was the most prescribed medication across all practices?
@@ -144,15 +149,24 @@ select bnf_code, bnf_name, sum(items) as total from treatment group by bnf_code 
 1 row in set (26.55 sec)
 ```
 
-However a BNF code describes a particalur drug at particular dosage and in a particalur form. This seemed too narrow, as the same drug, when prescribed in different forms and at quantities, is counted separately.
+However a BNF code describes a particular drug at particular dosage and in a particular form. This seemed too narrow, as the same drug, when prescribed in different forms and at quantities, is counted separately.
 
-For this reason, and after looking the Chemical table, I decided the look at the first 9 characters of the bnf code. This appears to be a base code for drugs of the same type. This gave me a final result of:
+For this reason, and after looking the Chemical table, I decided the look at the first 9 characters of the bnf code.
 
-> Unique shortened bnf_code (based from chemicals)
+```
+select * from chemical where chemical_sub_code = "0212000Y0";
++-----+-------------------+-------------+
+| id  | chemical_sub_code | name        |
++-----+-------------------+-------------+
+| 548 | 0212000Y0         | Simvastatin |
++-----+-------------------+-------------+
+1 row in set (0.00 sec)
+```
+
+Searching for prescriptions with this code gave me a result of:
 
 ```
 select left(bnf_code,9) as sub_code, bnf_name, sum(items) as total from treatment group by sub_code order by total desc limit 1;
-
 +-----------+----------------------+---------+
 | sub_code  | bnf_name             | total   |
 +-----------+----------------------+---------+
@@ -160,11 +174,10 @@ select left(bnf_code,9) as sub_code, bnf_name, sum(items) as total from treatmen
 +-----------+----------------------+---------+
 ```
 
-Digging a little further, I found that this drug came in a variety of names and quantities:
+Digging a little further, I found that this drug came in a variety of names and dosages:
 
 ```
 select left(bnf_code,9) as sub_code, bnf_name, count(items) from treatment where left(bnf_code,9) = "0212000Y0" group by bnf_name;
-
 +-----------+------------------------------------+--------------+
 | sub_code  | bnf_name                           | count(items) |
 +-----------+------------------------------------+--------------+
@@ -187,34 +200,19 @@ select left(bnf_code,9) as sub_code, bnf_name, count(items) from treatment where
 15 rows in set (12.65 sec)
 ```
 
+### Final answer
+
+Simvastatin, and related drugs with chemical code 0212000Y0, was prescribed 5116027 times.
+
+
+
 ## d) Which practice spent the most and the least per patient?
 
+This seemed to be relatively more straightforward to interpret. Find the total spent, find the total patients and divide to find an average.
+
+I began looking at who spent the least, again getting the top 10 to check for anomalies.
+
 ```
-select practice, round(sum(act_cost),2) as total from treatment group by practice order by sum(act_cost) desc limit 1;
-+----------+------------+
-| practice | total      |
-+----------+------------+
-| M85063   | 1638640.13 |
-+----------+------------+
-1 row in set (16.98 sec)
-
-select treatment.practice, round(sum(treatment.act_cost),2) as total, surgery_data.totalAll from treatment inner join surgery_data on treatment.practice = surgery_data.practice group by treatment.practice order by total desc limit 1;
-+----------+------------+----------+
-| practice | total      | totalAll |
-+----------+------------+----------+
-| M85063   | 1638640.13 |    60352 |
-+----------+------------+----------+
-1 row in set (1 hour 40 min 41.92 sec)
-
-select sum(treatment.act_cost) as total, surgery_data.totalAll, (sum(treatment.act_cost)/surgery_data.totalAll) as "Average" from surgery_data inner join treatment on treatment.practice = surgery_data.practice where treatment.practice = "M85063";
-+--------------------+----------+--------------------+
-| total              | totalAll | Average            |
-+--------------------+----------+--------------------+
-| 1638640.1302093118 |    60352 | 27.151380736501057 |
-+--------------------+----------+--------------------+
-1 row in set (11.63 sec)
-
-
 select treatment.practice, sum(treatment.act_cost) as total, surgery_data.totalAll, (sum(treatment.act_cost)/surgery_data.totalAll) as "Average" from surgery_data inner join treatment on treatment.practice = surgery_data.practice group by treatment.practice order by Average limit 10;
 +----------+--------------------+----------+----------------------+
 | practice | total              | totalAll | Average              |
@@ -231,9 +229,12 @@ select treatment.practice, sum(treatment.act_cost) as total, surgery_data.totalA
 | N85643   |  644.0400002002716 |     1779 |   0.3620236088815467 |
 +----------+--------------------+----------+----------------------+
 10 rows in set (1 hour 38 min 38.25 sec)
+```
 
-> Y01690 Only prescribed 2 items in Feb 2016
-select sum(items), sum(act_c* ost), period from treatment where practice = "Y01690" group by period;
+Remarkably, surgery Y01690 only spent just over 1 penny per patient. This seemed strange, so I looked at the number of items prescribed.
+
+```
+select sum(items), sum(act_cost), period from treatment where practice = "Y01690" group by period;
 +------------+-------------------+--------+
 | sum(items) | sum(act_cost)     | period |
 +------------+-------------------+--------+
@@ -241,17 +242,13 @@ select sum(items), sum(act_c* ost), period from treatment where practice = "Y016
 |          2 | 4.449999928474426 | 201602 |
 +------------+-------------------+--------+
 2 rows in set (13.11 sec)
+```
 
-select gp_id, name, postcode from surgery where gp_id = "Y01690";
-+--------+--------------------------+----------+
-| gp_id  | name                     | postcode |
-+--------+--------------------------+----------+
-| Y01690 | SCHOOL LANE PMS PRACTICE | IP24 2AG |
-+--------+--------------------------+----------+
-1 row in set (0.01 sec)
+Strangely, Y01690 only prescribed 21 items in January 2016, and 2 items in February 2016. This suggests there may have been extenuating circumstances (maybe the surgery was closed for refurbishment) that would give such low prescription numbers and therefore such a high average.
 
-> Only 1 patient
+Then I looked for the highest value, again returning the top 10.
 
+```
 select treatment.practice, sum(treatment.act_cost) as total, surgery_data.totalAll, (sum(treatment.act_cost)/surgery_data.totalAll) as "Average" from surgery_data inner join treatment on treatment.practice = surgery_data.practice group by treatment.practice order by Average desc limit 10;
 +----------+--------------------+----------+--------------------+
 | practice | total              | totalAll | Average            |
@@ -268,57 +265,33 @@ select treatment.practice, sum(treatment.act_cost) as total, surgery_data.totalA
 | E87711   |  34552.28004068136 |      284 |  121.6629578897231 |
 +----------+--------------------+----------+--------------------+
 10 rows in set (1 hour 40 min 47.78 sec)
-
-select gp_id, name, postcode from surgery where gp_id = "G82651";
-+--------+------------------------+----------+
-| gp_id  | name                   | postcode |
-+--------+------------------------+----------+
-| G82651 | BURRSWOOD NURSING HOME | TN3 9PY  |
-+--------+------------------------+----------+
-1 row in set (0.00 sec)
 ```
 
+As with the lowest spent, we have found an anomalous value. G82651 spent over £7k on 1 patient.
+
+G82651 is the famous Burrswood Nursing home from question *b*. The private nursing that has (clearly) on 1 NHS patient with, presumably, extensive healthcare needs. Therefore, creating a very high average.
+
+### Final answer
+
+Lowest: Y01690
+Highest: G82651
 
 ## e) What was the difference in selective serotonin reuptake inhibitor prescriptions between January and February?
 
-http://www.nhs.uk/conditions/SSRIs-(selective-serotonin-reuptake-inhibitors)/Pages/Introduction.aspx
-Types of SSRIs
+Here we must define "serotonin reuptake inhibitor". The NHS provides the following list:
+
+**Types of SSRIs**:
 There are currently seven SSRIs prescribed in the UK:
-citalopram (Cipramil)
-dapoxetine (Priligy)
-escitalopram (Cipralex)
-fluoxetine (Prozac or Oxactin)
-fluvoxamine (Faverin)
-paroxetine (Seroxat)
-sertraline (Lustral)
+* citalopram (Cipramil)
+* dapoxetine (Priligy)
+* escitalopram (Cipralex)
+* fluoxetine (Prozac or Oxactin)
+* fluvoxamine (Faverin)
+* paroxetine (Seroxat)
+* sertraline (Lustral)
+*(SSRIs - NHS (2017))*
 
 ```
-select count(items) as "Serotonin prescriptions", period as selective_serotonin from treatment where
-bnf_name like "%citalopram%" or
-bnf_name like "%Cipramil%" or
-bnf_name like "%dapoxetine%" or
-bnf_name like "%Priligy%" or
-bnf_name like "%escitalopram%" or
-bnf_name like "%Cipralex%" or
-bnf_name like "%fluoxetine%" or
-bnf_name like "%Prozac%" or
-bnf_name like "%Oxactin%" or
-bnf_name like "%fluvoxamine%" or
-bnf_name like "%Faverin%" or
-bnf_name like "%paroxetine%" or
-bnf_name like "%Seroxat%" or
-bnf_name like "%sertraline%" or
-bnf_name like "%Lustral%"
-group by period;
-
-+-------------------------+---------------------+
-| Serotonin prescriptions | selective_serotonin |
-+-------------------------+---------------------+
-|                   99715 | 201601              |
-|                   99215 | 201602              |
-+-------------------------+---------------------+
-2 rows in set (27.70 sec)
-
 select sum(items) as "Serotonin prescriptions", period as selective_serotonin from treatment where
 bnf_name like "%citalopram%" or
 bnf_name like "%Cipramil%" or
@@ -344,11 +317,16 @@ group by period;
 |                 2725157 | 201602              |
 +-------------------------+---------------------+
 2 rows in set (27.81 sec)
-
 ```
 
+### Final answer:
+January   February
+-------   -------
+2742049 - 2725157 = 16892
 
-f) Visualise the top 10 practices by number of metformin prescriptions throughout the entire period.
+## f) Visualise the top 10 practices by number of metformin prescriptions throughout the entire period.
+
+The term "prescriptions" again needs interpretation. Again, I have looked at the 'items' value for sake of consistency between answers.
 
 ```
 select practice, sum(items) as "metformin prescriptions" from treatment where bnf_name like "%metformin%" group by practice order by sum(items) desc limit 10;
@@ -366,91 +344,8 @@ select practice, sum(items) as "metformin prescriptions" from treatment where bn
 | J82155   |                    2108 |
 | Y01008   |                    2083 |
 +----------+-------------------------+
-
-
 10 rows in set (12.93 sec)
-
-select bnf_code, sum(items) as "metformin prescriptions", bnf_name from treatment where bnf_name like "%metformin%" group by bnf_name order by sum(items) desc;
-+-----------------+-------------------------+------------------------------------------+
-| bnf_code        | metformin prescriptions | bnf_name                                 |
-+-----------------+-------------------------+------------------------------------------+
-| 0601022B0AAABAB |                 2072307 | Metformin HCl_Tab 500mg                  |
-| 0601022B0AAASAS |                  459598 | Metformin HCl_Tab 500mg M/R              |
-| 0601022B0AAAVAV |                  254163 | Metformin HCl_Tab 1g M/R                 |
-| 0601022B0AAADAD |                  246856 | Metformin HCl_Tab 850mg                  |
-| 0601022B0AAATAT |                   31134 | Metformin HCl_Tab 750mg M/R              |
-| 0601023ADAAAAAA |                   19558 | Metformin HCl/Sitagliptin_Tab 1g/50mg    |
-| 0601023W0AAAAAA |                    9657 | Pioglitazone/Metformin HCl_Tab15mg/850mg |
-| 0601022B0AAARAR |                    8771 | Metformin HCl_Oral Soln 500mg/5ml S/F    |
-| 0601023Z0AAAAAA |                    8035 | Vildagliptin/Metformin HCl_Tab 50mg/1g   |
-| 0601023AFAAABAB |                    4900 | Linagliptin/Metformin_Tab 2.5mg/1g       |
-| 0601023AJAAAAAA |                    2846 | Alogliptin/Metformin_Tab 12.5mg/1g       |
-| 0601023Z0AAABAB |                    1984 | Vildagliptin/Metformin HCl_Tab50mg/850mg |
-| 0601023ALAAABAB |                    1533 | Dapagliflozin/Metformin_Tab 5mg/1g       |
-| 0601023AHAAABAB |                    1372 | Saxagliptin/Metformin_Tab 2.5mg/1g       |
-| 0601023AFAAAAAA |                     817 | Linagliptin/Metformin_Tab 2.5mg/850mg    |
-| 0601023APAAABAB |                     628 | Canagliflozin/Metformin_Tab 50mg/1g      |
-| 0601023AHAAAAAA |                     226 | Saxagliptin/Metformin_Tab 2.5mg/850mg    |
-| 0601023ALAAAAAA |                     209 | Dapagliflozin/Metformin_Tab 5mg/850mg    |
-| 0601023ARAAADAD |                     174 | Empagliflozin/Metformin_Tab 12.5mg/1g    |
-| 0601023APAAAAAA |                      95 | Canagliflozin/Metformin_Tab 50mg/850mg   |
-| 0601023ARAAABAB |                      90 | Empagliflozin/Metformin_Tab 5mg/1g       |
-| 0601022B0AAAIAI |                      38 | Metformin HCl_Liq Spec 500mg/5ml         |
-| 0601023ARAAACAC |                      29 | Empagliflozin/Metformin_Tab 12.5mg/850mg |
-| 0601022B0AAAXAX |                      22 | Metformin HCl_Pdr Sach 1g S/F            |
-| 0601023ARAAAAAA |                      16 | Empagliflozin/Metformin_Tab 5mg/850mg    |
-| 0601022B0AAAWAW |                       8 | Metformin HCl_Pdr Sach 500mg S/F         |
-| 0601022B0AAANAN |                       1 | Metformin HCl_Liq Spec 5mg/5ml           |
-+-----------------+-------------------------+------------------------------------------+
-27 rows in set (13.04 sec)
-
-
-select left(bnf_code,9) , sum(items) as "metformin prescriptions" from treatment where bnf_name like "%metformin%" group by left(bnf_code,9) order by sum(items) desc;
-+------------------+-------------------------+
-| left(bnf_code,9) | metformin prescriptions |
-+------------------+-------------------------+
-| 0601022B0        |                 3072898 |
-| 0601023AD        |                   19558 |
-| 0601023Z0        |                   10019 |
-| 0601023W0        |                    9657 |
-| 0601023AF        |                    5717 |
-| 0601023AJ        |                    2846 |
-| 0601023AL        |                    1742 |
-| 0601023AH        |                    1598 |
-| 0601023AP        |                     723 |
-| 0601023AR        |                     309 |
-+------------------+-------------------------+
-10 rows in set (13.00 sec)
-
-select practice, sum(items) as "metformin prescriptions" from treatment where
-left(bnf_code, 9) = "0601022B0" or
-left(bnf_code, 9) = "0601023AD" or
-left(bnf_code, 9) = "0601023Z0" or
-left(bnf_code, 9) = "0601023W0" or
-left(bnf_code, 9) = "0601023AF" or
-left(bnf_code, 9) = "0601023AJ" or
-left(bnf_code, 9) = "0601023AH" or
-left(bnf_code, 9) = "0601023AL" or
-left(bnf_code, 9) = "0601023AP" or
-left(bnf_code, 9) = "0601023AR"
-group by practice order by sum(items) desc limit 10;
-+----------+-------------------------+
-| practice | metformin prescriptions |
-+----------+-------------------------+
-| M85063   |                    3254 |
-| K83002   |                    2943 |
-| C82024   |                    2840 |
-| F84006   |                    2745 |
-| C83019   |                    2668 |
-| C83064   |                    2560 |
-| D82044   |                    2359 |
-| F84087   |                    2183 |
-| J82155   |                    2113 |
-| Y01008   |                    2094 |
-+----------+-------------------------+
-10 rows in set (18.51 sec)
 ```
-
 
 ## Task 4: Observations of Database
 
@@ -497,9 +392,12 @@ https://httpd.apache.org/ (Accessed: 13th June 2017)
 * SQL Alchemy - The Database Toolkit for Python (2017). Available at:<br />
 https://www.sqlalchemy.org/ (Accessed: 13th June 2017)
 
-* http://www.nhs.uk/conditions/beta-blockers/pages/introduction.aspx
+* Beta-blockers - NHS Choices (2017). Available at:<br /> http://www.nhs.uk/conditions/beta-blockers/pages/introduction.aspx
 
 * http://www.burrswood.org.uk/
+
+* SSRIs - NHS (2017). Available at:<br />
+http://www.nhs.uk/conditions/SSRIs-(selective-serotonin-reuptake-inhibitors)/Pages/Introduction.aspx (Accessed: 15th June 2017)
 
 # Set up
 
