@@ -349,15 +349,42 @@ select practice, sum(items) as "metformin prescriptions" from treatment where bn
 
 ## Task 4: Observations of Database
 
-Given such a large dataset, enforcing more structure upon the data might allow for more relationships between tables and therefore generate a more efficient database.
+Enforcing more structure on such a large data set would allow for relationships between tables and therefore generate a more efficient database.
 
 The GP Practice ID (e.g. "M85063") is a key identifier that could be used a primary / foreign key to link the Surgery, Surgery_data, and Treatment tables together. This would also avoid duplicating data, such as the appearance of the postcode in the Surgery and the Surgery_data tables.
 
-The other notable possible relationship between tables could be a link to the Chemicals table and the Treatment table, using the chemical_sub_code as a primary / foreign key. This link would render the repeated (and somewhat clunky) use of the "SELECT **LEFT(bnf_code,9)** FROM Treatment etc..." in the queries above redundant. It would therefore make it much easier to identify the prescription drugs that belong to same chemical genus, but have distinct names for branding, legal, or other reasons.
+The Chemicals table and the Treatment table could also be linked using the chemical_sub_code as a primary / foreign key. This link would render the repeated (and somewhat clunky) use of the "SELECT **LEFT(bnf_code,9)** FROM Treatment etc..." in the queries above redundant. It would therefore make it much easier to identify the prescription drugs that belong to same chemical genus, but have distinct names for branding, legal, or other reasons.
 
-Attempts to build this relational structure were frustrated by inconsistencies in the data, showing how important it is to institute these policies before users input data, and enforcing them with validation. For instance, there were discrepancies in the practice ids and postcodes in the surgery and surgery_data table (both had 7 GP practices in N17 but only 6 were identical).
+Attempts to build this relational structure were frustrated by inconsistencies in the data, showing how important it is to institute these policies before users input data, and enforcing them with validation. For instance, there were discrepancies in the practice ids in the surgery and surgery_data table (both had 7 GP practices in N17 but only 6 were identical).
 
-There is also a danger in non-subject specialists (i.e. me) making these decisions after the fact. Any attempt to link the bnf_codes in the Treatments table with those in the Chemical table would be entirely based on ignorant assumptions, and not grounded in medical expertise. This further highlights the utility of making these decisions in the design phase.
+```
++----------+---------+
+| practice |         |
++----------+---------+
+| F85017   | F85017  |
+| F85019   | F85019  |
+| F85028   | F85028   |
+| F85030   | F85030   |
+| F85615   |F85615   |
+| F85628   | F85628   |
+| F85699   | Y04848 |
++----------+
+7 rows in set (0.01 sec)
+
+mysql> select gp_id from surgery where postcode like "N17%";
++--------+
+| gp_id  |
++--------+
+| F85017 |
+| F85019 |
+| F85028 |
+| F85030 |
+| F85615 |
+| F85628 |
+| Y04848 |
++--------+
+
+There is also a danger in non-subject specialists (i.e. me) making these decisions. Any attempt to link the bnf_codes in the Treatments table with those in the Chemical table would be entirely based on ignorant assumptions, and not grounded in medical expertise. This further highlights the utility of making these decisions in the design phase, where expert advice could be sort.
 
 ### Task 3.a
 
