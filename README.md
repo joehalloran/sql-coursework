@@ -4,13 +4,15 @@ Joe Halloran
 
 ## Exectuive summary
 
-Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+This communique chronicles the vagaries of using SQL to investigate open source NHS big data. It covers the entire process of finding NHS data in the public domain, building and populating a database, querying said database, and includes some observations on the coherence and consistency of the data.
 
 <div style="page-break-after: always;"></div>
 
-## iIntroduction
+## Introduction
 
-Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+Structure is a beautiful thing. Unfortunately, all beautiful things have their price. In this case the price of structure is foresight. In this investigation of NHS data, we will learn that imposing structure on large unstructured datasets is difficult. Structure should have been defined and imposed before users (thousands of health professionals working across the NHS) start inputting data in an inconsistent way. As Pandora discovered, once opened, the box is hard to shut.
+
+Section 1 of this report covers the inital set-up of the database. It details the logic behind a number of strategic decisions that shaped the subsequent stages of the investigation. Section 2 explains how the database was populated with NHS data sets. It goes into some detail on the use of Python and the SQL Alchemy toolkit *(SQL Alchemy - The Database Toolkit for Python (2017))* to process and organise the data. Section 3 describes the execution of SQL queries to answer a range of predetermined questions. It explains how ambiguities in these questions were addressed and how results were refined in light these ambiguities. Section 4 looks at ways in which the data could be cleaned and constrained, it explains how attempts to do so were frustrated by inconsistencies in the data and a lack of medical expertise. Section 4 illuminates the allusion to Pandora in the preceding paragraph; it extols the importance of instituting relational structures before using begin inputting data.
 
 ## Task 1 & 2: Database set up and data upload
 
@@ -359,7 +361,7 @@ Attempts to build this relational structure were frustrated by inconsistencies i
 
 ```
 +----------+---------+
-| practice |         |
+| Surgery_data table | Surgery table        |
 +----------+---------+
 | F85017   | F85017  |
 | F85019   | F85019  |
