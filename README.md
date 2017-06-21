@@ -55,11 +55,17 @@ The one great drawback of this approach was the time it took to run the `populat
 4. **Some data integrity vs speed trade-offs in the `populate_db.py` code**:
     * For instance, the `session.commit()` command, which commits changes to the database, is run after every line in the csv file is parsed. This could have been run only at the end of the file, or after *x* lines are parsed, to reduce the number of commits and therefore execution time. However, this would create a risk of data loss, if the program terminated before reaching the end of the file or *x* lines.
 
-Despite this huge time delay, these process provided a reliable, mainly automated, and replicable means of populating the databases.
+Despite this huge time delay, this process provided a reliable, automated, and replicable means of populating the databases.
 
-## Task 3: Database queries
+# Task 3: Database queries
 
-### a) How many practices and registered patients are there in the N17 postcode Area?
+## a) How many practices and registered patients are there in the N17 postcode Area?
+
+### Final Answer
+
+There are 7 surgeries in the N17 area with 52248 patients
+
+### Queries
 
 This could be answered using the following queries.
 
@@ -85,13 +91,9 @@ select sum(totalAll) from surgery_data where postcode LIKE "N17%";
 1 row in set (0.01 sec)
 ```
 
-### Final Answer
-
-There are 7 surgeries in the N17 area with 52248 patients
-
 ## b) Which practice prescribed the most beta blockers per registered patients in total over the two month period?
 
-This queries requires a definition of "beta-blockers". A list was found on the NHS choices website *(Beta-blockers - NHS Choices (2017))*.
+This question requires a definition of "beta-blockers". In lieu of genuine medical expertise, a list was found on the NHS choices website *(Beta-blockers - NHS Choices (2017))*.
 
 The term "prescribed the most" also requires some consideration. If we are counting the number of times a beta-blockers was prescribed we would have to look at the 'items' column. If we were looking at the sheer amount of drugs that was given to patients, we should look at 'quantity'. I felt focussing on the sum of 'items' would best reflect the question.
 
@@ -139,7 +141,7 @@ limit 10;
 10 rows in set (2 min 8.14 sec)
 ```
 
-As suspected the top item is an anomaly, with only one patient. Further investigate revealed G82651 is a private nursing *(Burrswood nursing home (2017))* home that accepts some NHS patients, this explains the one patient.
+As suspected the top item is an anomaly, with only one patient. Further investigate revealed G82651 is a private nursing *(Burrswood nursing home (2017))* home that accepts some NHS patients. We can assume they only had 1 NHS patient (alongside lots of private patients) at the time.
 
 ```
 select gp_id, name, postcode from surgery where gp_id = "G82651";
