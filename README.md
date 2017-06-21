@@ -14,6 +14,8 @@ Structure is a beautiful thing. Unfortunately, all beautiful things have their p
 
 Section 1 of this report covers the initial set-up of the database. It details the logic behind a number of strategic decisions that shaped the subsequent stages of the investigation. Section 2 explains how the database was populated with NHS data sets. The commentary in sections 1 and 2 includes the use of Python and the SQL Alchemy toolkit *(SQL Alchemy - The Database Toolkit for Python (2017))* to process and organise the data. Section 3 describes the execution of SQL queries to answer a range of predetermined questions. It explains how ambiguities in these questions were addressed and how results were refined in light these ambiguities. Section 4 looks at ways in which the data could be cleaned and constrained, it explains how attempts to do so were frustrated by inconsistencies in the data and a lack of medical expertise. Section 4 expands upon the allusion to Pandora in the preceding paragraph; it extols the importance of instituting relational structures before users begin inputting data.
 
+This report also includes some Apprendices that detail the technical steps required to set up the database system. They are as much for my reference, as they are for public consumption.
+
 <div style="page-break-after: always;"></div>
 
 ## Task 1: Database set up
@@ -497,31 +499,355 @@ http://www.nhs.uk/conditions/SSRIs-(selective-serotonin-reuptake-inhibitors)/Pag
 
 <div style="page-break-after: always;"></div>
 
-## Appendix 1
+## Appendix 1 - How to setup a LAMP server with Vagrant.
 
-## Appendix 2
+### Set up vagrant
 
-## Appendix 3
-# Set up
+* [Install vagrant](https://www.vagrantup.com/docs/installation/)
+* `mkdir [folder_name]`
+* `cd [folder_name]`
+* `mkdir public` (this will become the webserver root)
+* `vagrant init`
+* `vagrant box add ubuntu/trusty64` (other boxes available on vagrant website)
+* Open vagrantfile in [folder_name]. Add this:
+```
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/trusty64"
+end
+```
+* `vagrant up`
+* Add this to the vagrantFile [CHANGE HOST NUMBER]:
+```
+PORT FORWARDING
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/trusty64"
+  config.vm.network :forwarded_port, guest: 80, host: 4567
+end
+```
+* `vagrant reload --provision`
 
-Vagrant PHP and Mysql
+### Configure server
 
-Php my admin
-sudo apt-get install phpmyadmin php-mbstring php-gettext
-sudo nano apache2.conf
+* `vagrant ssh` (Note, when you vagrant ssh into your machine, you're in/home/vagrant. /home/vagrant is a different directory from the synced /vagrant directory.)
+* `sudo apt-get update`
+* `sudo apt-get upgrade`
+* `sudo apt-get -y install php5 libapache2-mod-php5 php5-mcrypt`
+* `sudo apt-get -y install mysql-server libapache2-mod-auth-mysql php5-mysql`
+* `sudo mysql_secure_installation` (complete set up)
+* `cd /etc/apache2/sites-enabled`
+* `Sudo nano 000-default.conf`. Change document root:
+```
+DocumentRoot /vagrant/public
+# /var/www/html - Comment this out
+```
+* `cd ..`
+* `sudo nano apache2.conf`. Add this (scroll down to find relevant section near bottom of document)
+```
+<Directory /vagrant/public >
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+</Directory>
+```
+* `sudo a2enmod rewrite`
+* `sudo service apache2 restart`
 
-PIP
-sudo apt-get install python-dev python-pip python-setuptools build-essential
+### Set up PHP My admin
+* `sudo apt-get install phpmyadmin php-mbstring php-gettext`
+* sudo nano apache2.conf -- JOE, WHAT IS THIS FOR??
+
+### Create database
+* `mysql -u root -p`
+* `mysql> create database PrescriptionsDB;`
+* `exit` (you can exit MySQL server and use PHP My Admin to access DB)
+* `logout` (leave virtual machine)
+* Add index.html (see appendix 2) to [folder_name]/public on host machine
+* In your browser, navigate to localhost:[PORT_NUMBER_YOU_SELECTED_EARLIER]
+* Log in to PHP My Admin
+
+## Appendix 2 - Index.html
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <h1>Joe's PHP My Admin Testing server</h1>
+    <a href="/phpmyadmin">Go to php my admin</a>
+  </body>
+</html>
+```
+
+## Appendix 3 - Build database with Python & SQL Alchemy
+
+### Add script
+
+* Navigate to [folder_name] on host machine
+* Add `detabase_setup.py`
+
+### Install Python modules & run script
+
+* `vagrant ssh`
+* `sudo apt-get install python-dev python-pip python-setuptools build-essential`
+* `pip install pymysql`
+* `cd /vagrant`
+* `python database_setup.py`
+
+### database_setup.py
+
+```python
+import os
+import sys
+from sqlalchemy import Column, ForeignKey, Integer, String, Float
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
+from sqlalchemy import create_engine
+
+Base = declarative_base()
+
+class Chemical(Base):
+	__tablename__ = 'chemical'
+	id = Column(Integer, primary_key = True)
+	chemical_sub_code = Column(String(20), nullable=False, unique = True)
+	name = Column(String(100), nullable = False, unique = False)
+
+class Surgery(Base):
+	__tablename__ = 'surgery'
+	id = Column(Integer, primary_key = True)
+	gp_id = Column(String(20), unique = True)
+	name = Column(String(100), nullable = False, unique = False)
+	addressOne = Column(String(100), nullable = False, unique = False)
+	addressTwo = Column(String(100), nullable = False, unique = False)
+	city = Column(String(100), nullable = False, unique = False)
+	county = Column(String(100), nullable = False, unique = False)
+	postcode = Column(String(20), nullable = False, unique = False)
+
+class SurgeryData(Base):
+	__tablename__ = 'surgery_data'
+	id = Column(Integer, primary_key = True)
+	# Should be FK
+	practice = Column(String(20), nullable = False)
+	postcode = Column(String(20), nullable = False)
+	ons_ccg_code = Column(String(20), nullable = False)
+	ccg_code = Column(String(20), nullable = False)
+	ons_region_code = Column(String(100), nullable = False)
+	nhse_region_code = Column(String(100), nullable = False)
+	ons_comm_rgn_code = Column(String(100), nullable = False)
+	nhse_comm_region_code = Column(String(100), nullable = False)
+	totalAll = Column(Integer)
+	totalMale = Column(Integer)
+	totalFemale = Column(Integer)
+
+class Treatment(Base):
+	__tablename__ = 'treatment'
+	id = Column(Integer, primary_key = True)
+	sha = Column(String(10), nullable = False, unique = False)
+	pct = Column(String(20), nullable = False, unique = False)
+	# Should eb FK
+	practice = Column(String(20), nullable = False, unique = False)
+	bnf_code = Column(String(20), nullable = False, unique = False)
+	bnf_name = Column(String(100), nullable = False, unique = False)
+	items = Column(Integer, nullable = False, unique = False)
+	nic = Column(Float, nullable = False, unique = False)
+	act_cost = Column(Float, nullable = False, unique = False)
+	quantity = Column(Integer, nullable = False, unique = False)
+	period = Column(String(20), nullable = False, unique = False)
+
+engine = create_engine('mysql+pymysql://root:root@127.0.0.1:3306/PrescriptionsDB')
+Base.metadata.create_all(engine)
+```
+
+## Appendix 4
+
+* Ensure `populate_db.py` is in [folder_name] on host machine
+* From with `/vagrant` folder on virtual machine
+* `python populate_db.py`
+
+### populate_db.py
+```python
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from time import gmtime, strftime
+
+from database_setup import Base, Chemical, Surgery, SurgeryData, Treatment
 
 
-PIP install pymysql
+def readChemicals(file):
+	duplicates = []
+	f = open(file)
+	lineCounter = 0
+	for line in f:
+		items = line.split(",")
+		chem_sub, name = stripWhiteSpaces(items[0]), stripWhiteSpaces(items[1])
+		chem = Chemical(chemical_sub_code = chem_sub, name=name)
+		session.add(chem)
+		session.commit()
+	f.close()
 
-$ mysql -u root -p
+class FileReader:
 
-mysql> create database PrescriptionsDB;
+	def getSession(self):
+		engine = create_engine('mysql+pymysql://root:root@127.0.0.1:3306/PrescriptionsDB')
+		Base.metadata.bind = engine
+		DBSession = sessionmaker(bind=engine)
+		session = DBSession()
+		return session
 
-## Upload REPORT
-vagrant@vagrant-ubuntu-trusty-64:/vagrant$ python populate_db.py
+	def readChemicals(self, file):
+		duplicates = []
+		errors  =[]
+		session  = self.getSession()
+		f = open(file)
+		lineCounter = 0
+		first_line = f.readline() ## SKIP HEADERS
+		for line in f:
+			items = line.split(",")
+			chem_sub, name = self.stripWhiteSpaces(items[0]), self.stripWhiteSpaces(items[1])
+			# if chem_sub does not exist in db
+			if session.query(Chemical.id).filter(Chemical.chemical_sub_code==chem_sub).count() == 0:
+				try:
+					chem = Chemical(chemical_sub_code = chem_sub, name=name)
+					session.add(chem)
+					session.commit()
+				except:
+					errors.append(chem_sub)
+			else:
+				duplicates.append(chem_sub)
+			lineCounter += 1
+		print("")
+		print("UPLOAD REPORT:", file)
+		print("Lines parsed: ",lineCounter)
+		print("Errors: ", len(errors))
+		print("Duplicates: ", len(duplicates))
+		f.close()
+
+	def readSurgeries(self, file):
+		duplicates = []
+		errors = []
+		session  = self.getSession()
+		f = open(file)
+		lineCounter = 0
+		for line in f:
+			items = line.split(",")
+			gp_id = self.stripWhiteSpaces(items[1])
+			if session.query(Surgery.gp_id).filter(Surgery.gp_id==gp_id).count() == 0:
+				try:
+					gp = Surgery(
+						gp_id = gp_id,
+						name= self.stripWhiteSpaces(items[2]),
+						addressOne= self.stripWhiteSpaces(items[3]),
+						addressTwo= self.stripWhiteSpaces(items[4]),
+						city= self.stripWhiteSpaces(items[5]),
+						county = self.stripWhiteSpaces(items[6]),
+						postcode = self.stripWhiteSpaces(items[7])
+					)
+					session.add(gp)
+					session.commit()
+				except:
+					errors.append(gp_id)
+			else:
+				duplicates.append(gp_id)
+			lineCounter += 1
+		print("")
+		print("UPLOAD REPORT:", file)
+		print("Lines parsed: ",lineCounter)
+		print("Errors: ", len(errors))
+		print("Duplicates: ", len(duplicates))
+		f.close()
+
+	def readSurgeriesData(self, file):
+		duplicates = []
+		errors = []
+		session  = self.getSession()
+		f = open(file)
+		lineCounter = 0
+		first_line = f.readline() ## SKIP HEADERS
+		for line in f:
+			items = line.split(",")
+			gp_id = self.stripWhiteSpaces(items[0])
+			try:
+				data = SurgeryData(
+					practice = gp_id,
+					postcode = self.stripWhiteSpaces(items[1]),
+					ons_ccg_code = self.stripWhiteSpaces(items[2]),
+					ccg_code = self.stripWhiteSpaces(items[3]),
+					ons_region_code = self.stripWhiteSpaces(items[4]),
+					nhse_region_code = self.stripWhiteSpaces(items[5]),
+					ons_comm_rgn_code = self.stripWhiteSpaces(items[6]),
+					nhse_comm_region_code = self.stripWhiteSpaces(items[7]),
+					totalAll = self.stripWhiteSpaces(items[8]),
+					totalMale = self.stripWhiteSpaces(items[9]),
+					totalFemale = self.stripWhiteSpaces(items[10]),
+				)
+				session.add(data)
+				session.commit()
+			except:
+				errors.append(gp_id)
+			lineCounter += 1
+		print("")
+		print("UPLOAD REPORT:", file)
+		print("Lines parsed: ",lineCounter)
+		print("Errors: ", len(errors))
+		print("Duplicates: ", len(duplicates))
+		f.close()
+
+	def readTreatment(self, file, run):
+		duplicates = []
+		errors = []
+		session  = self.getSession()
+		f = open(file)
+		lineCounter = 0
+		first_line = f.readline() ## SKIP HEADERS
+		for line in f:
+			items = line.split(",")
+			try:
+				treatment = Treatment(
+					sha = self.stripWhiteSpaces(items[0]),
+					pct = self.stripWhiteSpaces(items[1]),
+					practice = self.stripWhiteSpaces(items[2]),
+					bnf_code = self.stripWhiteSpaces(items[3]),
+					bnf_name = self.stripWhiteSpaces(items[4]),
+					items = self.stripWhiteSpaces(items[5]),
+					nic = self.stripWhiteSpaces(items[6]),
+					act_cost = self.stripWhiteSpaces(items[7]),
+					quantity = self.stripWhiteSpaces(items[8]),
+					period = self.stripWhiteSpaces(items[9])
+				)
+				session.add(treatment)
+				session.commit()
+			except:
+				errors.append(self.stripWhiteSpaces(items[3])) #record bnf code as a near UID
+			lineCounter += 1
+		print("")
+		print("UPLOAD REPORT:", file)
+		print("Lines parsed: ",lineCounter)
+		print("Errors: ", len(errors))
+		print("Duplicates: ", len(duplicates))
+		f.close()
+
+	def stripWhiteSpaces(self, string):
+		return str.lstrip(str.rstrip(string))
+
+x = FileReader()
+print("BEGIN EXECUTION AT: " + strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime()))
+x.readChemicals("T201601CHEMSUBS.CSV")
+x.readChemicals("T201602CHEMSUBS.CSV")
+x.readSurgeries("T201601ADDRBNFT.CSV")
+x.readSurgeries("T201602ADDRBNFT.CSV")
+x.readSurgeriesData("gp-reg-patients-prac-quin-age.csv")
+print("BEGIN LARGE FILE 1: " + strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime()))
+x.readTreatment("T201601PDPIBNFT.CSV", 1) ## Int input is  fudge to make PK
+print("BEGIN LARGE FILE 1: " + strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime()))
+x.readTreatment("T201602PDPIBNFT.CSV", 2) ## Int input is  fudge to make PK
+print("COMPLETED: " + strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime()))
+```
+
+### Report from populate_db run on 11th June 2017
+```
 BEGIN EXECUTION AT: Sun, 11 Jun 2017 07:29:17 +0000
 
 ('UPLOAD REPORT:', 'T201601CHEMSUBS.CSV')
@@ -561,3 +887,4 @@ BEGIN LARGE FILE 1: Sun, 11 Jun 2017 12:00:56 +0000
 ('Errors: ', 0)
 ('Duplicates: ', 0)
 COMPLETED: Sun, 11 Jun 2017 15:51:15 +0000
+```
