@@ -311,15 +311,14 @@ G82651 is the same Burrswood Nursing home from question *b*. We can assume that 
 ## e) What was the difference in selective serotonin reuptake inhibitor prescriptions between January and February?
 
 ### Final answer:
-January   February
--------   -------
+
 2742049 - 2725157 = 16892
 
 ### Queries
 
 Here we must define "serotonin reuptake inhibitor". The NHS provides the following list *(SSRIs - NHS (2017))*:
 
-**Types of SSRIs currently prescribed in the UK:
+**Types of SSRIs currently prescribed in the UK:**
 * citalopram (Cipramil)
 * dapoxetine (Priligy)
 * escitalopram (Cipralex)
@@ -386,36 +385,23 @@ Enforcing more structure on such a large data set would allow for relationships 
 
 The GP Practice ID (e.g. "M85063") is a key identifier that could be used a primary / foreign key to link the Surgery, Surgery_data, and Treatment tables together. This would also avoid duplicating data, such as the appearance of the postcode in the Surgery and the Surgery_data tables.
 
-The Chemicals table and the Treatment table could also be linked using the chemical_sub_code as a primary / foreign key. This link would render the repeated (and somewhat clunky) use of the "SELECT **LEFT(bnf_code,9)** FROM Treatment etc..." in the queries above redundant. It would therefore make it much easier to identify the prescription drugs that belong to same chemical genus, but have distinct names for branding, legal, or other reasons.
+The Chemicals table and the Treatment table could also be linked using the chemical_sub_code as a primary / foreign key. This link would render the repeated (and somewhat clunky) use of the "SELECT **LEFT(bnf_code,9)** FROM etc.." in the queries above redundant. It would therefore make it much easier to identify the prescription drugs that belong to same chemical genus, but have distinct names for branding, legal, or other reasons.
 
 Attempts to build this relational structure were frustrated by inconsistencies in the data, showing how important it is to institute these policies before users input data, and enforcing them with validation. For instance, there were discrepancies in the practice ids in the surgery and surgery_data table (both had 7 GP practices in N17 but only 6 were identical).
 
 ```
-+----------+---------+
-| Surgery_data table | Surgery table        |
-+----------+---------+
-| F85017   | F85017  |
-| F85019   | F85019  |
-| F85028   | F85028   |
-| F85030   | F85030   |
-| F85615   |F85615   |
-| F85628   | F85628   |
-| F85699   | Y04848 |
-+----------+
-7 rows in set (0.01 sec)
-
-mysql> select gp_id from surgery where postcode like "N17%";
-+--------+
-| gp_id  |
-+--------+
-| F85017 |
-| F85019 |
-| F85028 |
-| F85030 |
-| F85615 |
-| F85628 |
-| Y04848 |
-+--------+
++--------------------+--------------------+
+| Surgery_data table | Surgery table      |
++--------------------+--------------------+
+| F85017             | F85017             |
+| F85019             | F85019             |
+| F85028             | F85028             |
+| F85030             | F85030             |
+| F85615             |F85615              |
+| F85628             | F85628             |
+| F85699             | Y04848             |
++--------------------+--------------------+
+```
 
 There is also a danger in non-subject specialists (i.e. me) making these decisions. Any attempt to link the bnf_codes in the Treatments table with those in the Chemical table would be entirely based on ignorant assumptions, and not grounded in medical expertise. This further highlights the utility of making these decisions in the design phase, where expert advice could be sort.
 
