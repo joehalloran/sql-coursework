@@ -93,6 +93,12 @@ select sum(totalAll) from surgery_data where postcode LIKE "N17%";
 
 ## b) Which practice prescribed the most beta blockers per registered patients in total over the two month period?
 
+### Final answer
+
+Burrswood Nursing home.
+
+### Queries
+
 This question requires a definition of "beta-blockers". In lieu of genuine medical expertise, a list was found on the NHS choices website *(Beta-blockers - NHS Choices (2017))*.
 
 The term "prescribed the most" also requires some consideration. If we are counting the number of times a beta-blockers was prescribed we would have to look at the 'items' column. If we were looking at the sheer amount of drugs that was given to patients, we should look at 'quantity'. I felt focussing on the sum of 'items' would best reflect the question.
@@ -153,12 +159,13 @@ select gp_id, name, postcode from surgery where gp_id = "G82651";
 1 row in set (0.00 sec)
 ```
 
+## c) Which was the most prescribed medication across all practices?
+
 ### Final answer
 
-Burrswood Nursing home.
+Simvastatin, and related drugs with chemical code 0212000Y0, was prescribed 5116027 times.
 
-
-## c) Which was the most prescribed medication across all practices?
+### Queries
 
 As with question b, the term "most prescribed" requires technical definition. For consistency, I stuck with summing values in the 'item' columns.
 
@@ -226,13 +233,14 @@ select left(bnf_code,9) as sub_code, bnf_name, count(items) from treatment where
 15 rows in set (12.65 sec)
 ```
 
+## d) Which practice spent the most and the least per patient?
+
 ### Final answer
 
-Simvastatin, and related drugs with chemical code 0212000Y0, was prescribed 5116027 times.
+Lowest: Y01690
+Highest: G82651
 
-
-
-## d) Which practice spent the most and the least per patient?
+### Queries
 
 This seemed to be relatively more straightforward to interpret. Find the total spent, find the total patients and divide to find an average.
 
@@ -297,12 +305,14 @@ As with the lowest spent, we have found an anomalous value. G82651 spent over £
 
 G82651 is the famous Burrswood Nursing home from question *b*. The private nursing that has (clearly) on 1 NHS patient with, presumably, extensive healthcare needs. Therefore, creating a very high average.
 
-### Final answer
-
-Lowest: Y01690
-Highest: G82651
-
 ## e) What was the difference in selective serotonin reuptake inhibitor prescriptions between January and February?
+
+### Final answer:
+January   February
+-------   -------
+2742049 - 2725157 = 16892
+
+### Queries
 
 Here we must define "serotonin reuptake inhibitor". The NHS provides the following list:
 
@@ -344,11 +354,6 @@ group by period;
 +-------------------------+---------------------+
 2 rows in set (27.81 sec)
 ```
-
-### Final answer:
-January   February
--------   -------
-2742049 - 2725157 = 16892
 
 ## f) Visualise the top 10 practices by number of metformin prescriptions throughout the entire period.
 
