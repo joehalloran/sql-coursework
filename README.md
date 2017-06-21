@@ -26,27 +26,29 @@ For the reasons outlined above (isolated, replicable, and automated). I created 
 
 Analysis of the data, lead to a simple strategy:
 1. Ignore arbitrary division of data into months
-    * We were given two sets of spreadsheets from January and February 2017.
-    * These spreadsheets were not essentially separate, and therefore should be included in the same table.
-    * In some cases, spreadsheets contained duplicate and unneccesary data. This should not be included in the database.
+    * We were given two sets of spreadsheets from January and February 2016.
+    * These spreadsheets were isomorphic and therefore should be included in the same table.
+    * In some cases, spreadsheets contained duplicate and unneccesary data. Duplicate data should not be included in the database.
 2. Table structure should reflect spreadsheet structure.
-  * Table heading should become database fields.
+    * Table heading should become database fields.
 
-With this strategy, I then wanted to create a script that would set up the database. I used the Python SQL Alchemy module *(SQL Alchemy - The Database Toolkit for Python (2017))*, which provides an ORM. This is a useful means of visualising the database by creating tables as Python classes. After running the `database_setup.py` script (see appendix ____??_____) the following tables were created.
+With this strategy, I then wanted to create a script that would set up the database. I used the Python SQL Alchemy module *(SQL Alchemy - The Database Toolkit for Python (2017))*, which provides an ORM. This offers a means of visualising the database by creating tables with Python classes. The `database_setup.py` script (see appendix ____??_____) was created for this purpose.
+
+The following tables were created:
 
 INCLUDE TABLES
 
 # Task 2: Data upload
 
-Having set up the database, I decided to continue using SQL Alchemy to parse the requisite csv files and populate the data base.
+Having set up the database, I decided to continue using SQL Alchemy to parse the requisite csv files and populate the database.
 
-This extra layer of abstraction allowed me to merge spreadsheets separated by month and, where appropriate, ignore duplcates. For instance, the two files that list all registered gp surgeries were >99% duplicated. This lead to the creation of the `populate_db.py` (see appendix _____**_____).
+This extra layer of abstraction allowed me to merge spreadsheets separated by month and, where appropriate, ignore duplcates. For instance, the two files that list all registered gp surgeries were >99% duplicated. This lead to the creation of the `populate_db.py` script (see appendix _____**_____).
 
 The one great drawback of this approach was the time it took to run the `populate_db.py` script. It took over 8 hours!! to complete the process of populating the tables with data. This is for a number of reasons:
-1. The sheer scale of the data: two of the csv files where 1.4GB. The final database contained c. 18 million rows.
-2. Limited hardware resources made available to the virtual mysql server: for instance, it had access to only 512MB of ram on the host machine.
-3. The extra cost of using an ORM tool: SQL Alchemy added an extra layer of abstraction.
-4. Some data integrity vs speed trade-offs in the `populate_db.py` code: For instance, the `session.commit()` command, which commits changes to the database, is run after every line in the csv file is parsed. This could have been run only at the end of the file, or after *x* lines are parsed, to reduce the number of commits and therefore execution time. However, this would create a risk of data loss, if the program terminated before reaching the end of the file or *x* lines.
+1. **The sheer scale of the data:** two of the csv files where 1.4GB. The final database contained c. 18 million rows.
+2. **Limited hardware resources made available to the virtual mysql server:** for instance, it had access to only 512MB of ram on the host machine.
+3. **The extra cost of using an ORM tool:** SQL Alchemy added an extra layer of abstraction.
+4. **Some data integrity vs speed trade-offs in the `populate_db.py` code**: For instance, the `session.commit()` command, which commits changes to the database, is run after every line in the csv file is parsed. This could have been run only at the end of the file, or after *x* lines are parsed, to reduce the number of commits and therefore execution time. However, this would create a risk of data loss, if the program terminated before reaching the end of the file or *x* lines.
 
 Despite this huge time delay, these process provided a reliable, mainly automated, and replicable means of populating the databases.
 
