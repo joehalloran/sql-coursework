@@ -4,7 +4,7 @@ Joe Halloran
 
 ## Exectuive summary
 
-This report is, in essence, a soliloquy. It reveals though processes as much as it describes actions. Superficially, it documents an investigation into NHS big data, via the medium of SQL. It records the process of building, populating, and querying a database. However it more about strategy and decision making the guided that process. It also includes some observations on the importance of coherent and consistent data.
+This report is, in essence, a soliloquy. It reveals though processes as much as it describes actions. Superficially, it documents an investigation into NHS big data, via the medium of SQL. It records the process of building, populating, and querying a database. However it is more about the strategy and decision making the guided that process. It also includes some observations on the importance of coherent and consistent data.
 
 <div style="page-break-after: always;"></div>
 
@@ -12,9 +12,9 @@ This report is, in essence, a soliloquy. It reveals though processes as much as 
 
 Structure is a beautiful thing. Unfortunately, all beautiful things have their price. In this case, the price of structure is foresight. In this investigation of NHS data, we will learn that imposing structure on large unstructured datasets is difficult. Structure should have been defined and imposed before users (thousands of health professionals working across the NHS) start inputting data in an inconsistent way. As Pandora discovered, once opened, the box is hard to shut.
 
-Section 1 of this report covers the initial set-up of the database. It details the logic behind a number of strategic decisions that shaped the subsequent stages of the investigation. Section 2 explains how the database was populated with NHS data sets. It goes into some detail on the use of Python and the SQL Alchemy toolkit *(SQL Alchemy - The Database Toolkit for Python (2017))* to process and organise the data. Section 3 describes the execution of SQL queries to answer a range of predetermined questions. It explains how ambiguities in these questions were addressed and how results were refined in light these ambiguities. Section 4 looks at ways in which the data could be cleaned and constrained, it explains how attempts to do so were frustrated by inconsistencies in the data and a lack of medical expertise. Section 4 illuminates the allusion to Pandora in the preceding paragraph; it extols the importance of instituting relational structures before using begin inputting data.
+Section 1 of this report covers the initial set-up of the database. It details the logic behind a number of strategic decisions that shaped the subsequent stages of the investigation. Section 2 explains how the database was populated with NHS data sets. The commentary in sections 1 and 2 includes the use of Python and the SQL Alchemy toolkit *(SQL Alchemy - The Database Toolkit for Python (2017))* to process and organise the data. Section 3 describes the execution of SQL queries to answer a range of predetermined questions. It explains how ambiguities in these questions were addressed and how results were refined in light these ambiguities. Section 4 looks at ways in which the data could be cleaned and constrained, it explains how attempts to do so were frustrated by inconsistencies in the data and a lack of medical expertise. Section 4 expands upon the allusion to Pandora in the preceding paragraph; it extols the importance of instituting relational structures before using begin inputting data.
 
-## Task 1 & 2: Database set up and data upload
+## Task 1 & 2: Database set up
 
 The data we are handling is historical, and therefore very unlikely to be altered (unless of course some new data was discovered in a dusty filing cabinet in a rarely visited hospital wing). It was, therefore, possible to treat the data as effectively static.
 
@@ -26,26 +26,29 @@ For the reasons outlined above (isolated, replicable, and automated). I created 
 
 Analysis of the data, lead to a simple strategy:
 1. Ignore arbitrary division of data into months
-  * We 
+  * We were given two sets of spreadsheets from January and February 2017.
+  * These spreadsheets were not essentially separate, and therefore should be included in the same table.
+  * In some cases, spreadsheets contained duplicate and unneccesary data. This should not be included in the database.
+2. Table structure should reflect spreadsheet structure.
+  * Table heading should become database fields.
 
-I then wanted to create a script that would set up the database. I used the Python SQL Alchemy module *(SQL Alchemy - The Database Toolkit for Python (2017))*, which provides an ORM. This is a useful means of  visualising the database by creating tables as Python classes. After running the `database_setup.py` script (see appendix ____??_____) the following tables were created.
+With this strategy, I then wanted to create a script that would set up the database. I used the Python SQL Alchemy module *(SQL Alchemy - The Database Toolkit for Python (2017))*, which provides an ORM. This is a useful means of visualising the database by creating tables as Python classes. After running the `database_setup.py` script (see appendix ____??_____) the following tables were created.
 
-This table structure ignores the arbitary division of data into months (we had a set of spreadsheets for both Janaurat a)
-
+INCLUDE TABLES
 
 # Task 2: Data upload
 
-Having set up the database, I decided to continue using SQL Alchemy to parse the requisite csv files, containing NHS data from January and February 2016) and populate the data base.
+Having set up the database, I decided to continue using SQL Alchemy to parse the requisite csv files and populate the data base.
 
-This extra layer of abstraction allowed me to merge spreadsheets that contained data arbitrailyu separated by month (we had spreadsheets) `populate_db.py` (parses csv files and uploads to databases). This allowed me to search for and eliminate duplicates (for instance in the two files that list all registered gp surgeries, were >99% duplicated).
+This extra layer of abstraction allowed me to merge spreadsheets separated by month and, where appropriate, ignore duplcates. For instance, the two files that list all registered gp surgeries were >99% duplicated. This lead to the creation of the `populate_db.py` (see appendix _____**_____).
 
 The one great drawback of this approach was the time it took to run the `populate_db.py` script. It took over 8 hours!! to complete the process of populating the tables with data. This is for a number of reasons:
-1. The sheer scale of the data: two of the csv files where 1.4GB.
+1. The sheer scale of the data: two of the csv files where 1.4GB. The final database contained c. 18 million rows.
 2. Limited hardware resources made available to the virtual mysql server: for instance, it had access to only 512MB of ram on the host machine.
 3. The extra cost of using an ORM tool: SQL Alchemy added an extra layer of abstraction.
-4. Some data integrity vs speed trade-offs in the `populate_db.py` code: For instance, the `session.commit()` command, which commits changes to the database, is run after every line in the csv file is parsed. This could have been run only at the end of the file, or after *x* lines are parsed, to reduce the number of commits and therefore execution time. However, this would create a risk of data loss if the program terminated before reaching the end of the file or *x* lines.
+4. Some data integrity vs speed trade-offs in the `populate_db.py` code: For instance, the `session.commit()` command, which commits changes to the database, is run after every line in the csv file is parsed. This could have been run only at the end of the file, or after *x* lines are parsed, to reduce the number of commits and therefore execution time. However, this would create a risk of data loss, if the program terminated before reaching the end of the file or *x* lines.
 
-Despite this huge time delay, these process provided a reliable, mainly automated, and replicable means of creating the databases.
+Despite this huge time delay, these process provided a reliable, mainly automated, and replicable means of populating the databases.
 
 ## Task 3: Database queries
 
@@ -76,6 +79,7 @@ select sum(totalAll) from surgery_data where postcode LIKE "N17%";
 ```
 
 ### Final Answer
+
 There are 7 surgeries in the N17 area with 52248 patients
 
 ## b) Which practice prescribed the most beta blockers per registered patients in total over the two month period?
