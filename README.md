@@ -1,5 +1,5 @@
 # TITLE
-## Database Systems coursework
+#### Database Systems coursework
 Joe Halloran
 
 ## Exectuive summary
@@ -461,7 +461,7 @@ Attempts to build this relational structure were frustrated by inconsistencies i
 +--------------------+--------------------+
 ```
 
-There is also a danger in non-subject specialists (i.e. me) making these sorts of decisions. For instance, the assumption that bnf_codes in the Treatments table could be link those in the Chemical table is not supported by medical expertise. This further highlights the utility of making these decisions in the design phase, where expert advice could be sought.
+There is also a danger in non-subject specialists (i.e. me) making these sorts of decisions. For instance, the assumption that bnf_codes in the Treatments table could be link those in the Chemical table is not supported by medical expertise. This further highlights the utility of making these decisions in the design phase, where expert advice can be sought.
 
 <div style="page-break-after: always;"></div>
 
