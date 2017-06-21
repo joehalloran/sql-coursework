@@ -101,7 +101,7 @@ Burrswood Nursing home.
 
 This question requires a definition of "beta-blockers". In lieu of genuine medical expertise, a list was found on the NHS choices website *(Beta-blockers - NHS Choices (2017))*.
 
-The term "prescribed the most" also requires some consideration. If we are counting the number of times a beta-blockers was prescribed we would have to look at the 'items' column. If we were looking at the sheer amount of drugs that was given to patients, we should look at 'quantity'. I felt focussing on the sum of 'items' would best reflect the question.
+The term "prescribed the most" also requires some consideration. If we are counting the number of times a doctor issues a prescription, we should look at the 'items' column. If we were looking at the sheer amount of drugs that was given to patients, we should look at 'quantity'. I felt focusing on the sum of 'items' would best reflect the question.
 
 I also decided to return the top 10 practices, to see if the top item is an outlier.
 
@@ -184,7 +184,7 @@ select bnf_code, bnf_name, sum(items) as total from treatment group by bnf_code 
 
 However a BNF code describes a particular drug at particular dosage and in a particular form. This seemed too narrow, as the same drug, when prescribed in different forms and at quantities, is counted separately.
 
-For this reason, and after looking the Chemical table, I decided the look at the first 9 characters of the bnf code.
+For this reason, and after looking at the Chemical table, I decided the look at the first 9 characters of the BNF code. This seemed to reflect the drug genus, as opposed to exact name and dosage.
 
 ```
 select * from chemical where chemical_sub_code = "0212000Y0";
@@ -237,8 +237,11 @@ select left(bnf_code,9) as sub_code, bnf_name, count(items) from treatment where
 
 ### Final answer
 
-Lowest: Y01690
-Highest: G82651
+**Lowest:**
+Y01690 - £0.01 per patient
+
+**Highest:**
+G82651- £7609.05 per patient
 
 ### Queries
 
@@ -265,7 +268,7 @@ select treatment.practice, sum(treatment.act_cost) as total, surgery_data.totalA
 10 rows in set (1 hour 38 min 38.25 sec)
 ```
 
-Remarkably, surgery Y01690 only spent just over 1 penny per patient. This seemed strange, so I looked at the number of items prescribed.
+Remarkably, surgery Y01690 only spent just over £0.01 per patient. This seemed strange, so I looked at the number of items prescribed.
 
 ```
 select sum(items), sum(act_cost), period from treatment where practice = "Y01690" group by period;
@@ -278,7 +281,7 @@ select sum(items), sum(act_cost), period from treatment where practice = "Y01690
 2 rows in set (13.11 sec)
 ```
 
-Strangely, Y01690 only prescribed 21 items in January 2016, and 2 items in February 2016. This suggests there may have been extenuating circumstances (maybe the surgery was closed for refurbishment) that would give such low prescription numbers and therefore such a high average.
+Strangely, Y01690 only prescribed 21 items in January 2016, and 2 items in February 2016. This suggests there may have been extenuating circumstances (maybe the surgery was closed for refurbishment) that would give such low prescription numbers and therefore such low total spend.
 
 Then I looked for the highest value, again returning the top 10.
 
@@ -303,7 +306,7 @@ select treatment.practice, sum(treatment.act_cost) as total, surgery_data.totalA
 
 As with the lowest spent, we have found an anomalous value. G82651 spent over £7k on 1 patient.
 
-G82651 is the famous Burrswood Nursing home from question *b*. The private nursing that has (clearly) on 1 NHS patient with, presumably, extensive healthcare needs. Therefore, creating a very high average.
+G82651 is the same Burrswood Nursing home from question *b*. We can assume that the sole patient has extensive healthcare needs. Therefore, creating a very high average spend.
 
 ## e) What was the difference in selective serotonin reuptake inhibitor prescriptions between January and February?
 
@@ -314,10 +317,9 @@ January   February
 
 ### Queries
 
-Here we must define "serotonin reuptake inhibitor". The NHS provides the following list:
+Here we must define "serotonin reuptake inhibitor". The NHS provides the following list *(SSRIs - NHS (2017))*:
 
-**Types of SSRIs**:
-There are currently seven SSRIs prescribed in the UK:
+**Types of SSRIs currently prescribed in the UK:
 * citalopram (Cipramil)
 * dapoxetine (Priligy)
 * escitalopram (Cipralex)
@@ -325,7 +327,7 @@ There are currently seven SSRIs prescribed in the UK:
 * fluvoxamine (Faverin)
 * paroxetine (Seroxat)
 * sertraline (Lustral)
-*(SSRIs - NHS (2017))*
+
 
 ```
 select sum(items) as "Serotonin prescriptions", period as selective_serotonin from treatment where
