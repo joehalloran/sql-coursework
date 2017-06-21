@@ -45,10 +45,15 @@ Having set up the database, I decided to continue using SQL Alchemy to parse the
 This extra layer of abstraction allowed me to merge spreadsheets separated by month and, where appropriate, ignore duplcates. For instance, the two files that list all registered gp surgeries were >99% duplicated. This lead to the creation of the `populate_db.py` script (see appendix _____**_____).
 
 The one great drawback of this approach was the time it took to run the `populate_db.py` script. It took over 8 hours!! to complete the process of populating the tables with data. This is for a number of reasons:
-1. **The sheer scale of the data:** two of the csv files where 1.4GB. The final database contained c. 18 million rows.
-2. **Limited hardware resources made available to the virtual mysql server:** for instance, it had access to only 512MB of ram on the host machine.
-3. **The extra cost of using an ORM tool:** SQL Alchemy added an extra layer of abstraction.
-4. **Some data integrity vs speed trade-offs in the `populate_db.py` code**: For instance, the `session.commit()` command, which commits changes to the database, is run after every line in the csv file is parsed. This could have been run only at the end of the file, or after *x* lines are parsed, to reduce the number of commits and therefore execution time. However, this would create a risk of data loss, if the program terminated before reaching the end of the file or *x* lines.
+1. **The sheer scale of the data:**
+    * Two of the csv files where 1.4GB.
+    * The final database contained c. 18 million rows.
+2. **Limited hardware resources**
+    *  The virtual mysql server only had access to 512MB of ram on the host machine.
+3. **The extra cost of using an ORM tool:**
+    * SQL Alchemy added an extra layer of abstraction.
+4. **Some data integrity vs speed trade-offs in the `populate_db.py` code**:
+    * For instance, the `session.commit()` command, which commits changes to the database, is run after every line in the csv file is parsed. This could have been run only at the end of the file, or after *x* lines are parsed, to reduce the number of commits and therefore execution time. However, this would create a risk of data loss, if the program terminated before reaching the end of the file or *x* lines.
 
 Despite this huge time delay, these process provided a reliable, mainly automated, and replicable means of populating the databases.
 
