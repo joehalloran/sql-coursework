@@ -4,7 +4,7 @@ Joe Halloran
 
 ## Exectuive summary
 
-This report is, in essence, a soliloquy. It reveals though processes as much as it describes actions. Superficially, it documents an investigation into NHS big data, via the medium of SQL. It records the process of building, populating, and querying a database. However it is more about the strategy and decision making the guided that process. It also includes some observations on the importance of coherent and consistent data.
+This report is, in essence, a soliloquy. It reveals thought processes as much as it describes actions. Superficially, it documents an investigation into NHS big data, via the medium of SQL. It records the process of building, populating, and querying a database. However it is more about the strategy and decision making the guided that process. It also includes some observations on the importance of coherent and consistent data.
 
 <div style="page-break-after: always;"></div>
 
@@ -24,7 +24,7 @@ With this in mind, I wanted to create an isolated and automated (where possible)
 
 A full description of the process, including scripts written is included as an appendix. In addition, you can find a summary of the process below.
 
-For the reasons outlined above (isolated, replicable, and automated). I created a virtual server using Vagrant *(Vagrant by Hashicorp (2017))* running Ubuntu 14.04 server addition *Ubuntu 14.04.5 LTS (2017)*. I then set up a LAMP server *(LAMP (software bundle) - Wikipedia (2017))* and installed phpmyadmin *(How to install phpmyadmin on ubuntu - Liquid Web (2017))* to give me GUI access to the MySQL server.
+For the reasons outlined above (isolated, replicable, and automated), I created a virtual server using Vagrant *(Vagrant by Hashicorp (2017))* running Ubuntu 14.04 *Ubuntu 14.04.5 LTS (2017)*. I then set up a LAMP server *(LAMP (software bundle) - Wikipedia (2017))* and installed phpmyadmin *(How to install phpmyadmin on ubuntu - Liquid Web (2017))* to give me GUI access to the MySQL server.
 
 Analysis of the data, lead to a simple strategy:
 1. Ignore arbitrary division of data into months
@@ -46,9 +46,9 @@ INCLUDE TABLES
 
 Having set up the database, I decided to continue using SQL Alchemy to parse the requisite csv files and populate the database.
 
-This extra layer of abstraction allowed me to merge spreadsheets separated by month and, where appropriate, ignore duplcates. For instance, the two files that list all registered gp surgeries were >99% duplicated. This lead to the creation of the `populate_db.py` script (see appendix _____**_____).
+This extra layer of abstraction allowed me to merge spreadsheets separated by month and, where appropriate, ignore duplcates. For instance, the two files that list all GPs in the UK were >99% duplicated. This lead to the creation of the `populate_db.py` script (see appendix _____**_____).
 
-The one great drawback of this approach was the time it took to run the `populate_db.py` script. It took over 8 hours!! to complete the process of populating the tables with data. This is for a number of reasons:
+The one great drawback of this approach was the time taken to run the `populate_db.py` script. It took over 8 hours!! to complete the process of populating the tables with data. This is for a number of reasons:
 1. **The sheer scale of the data:**
     * Two of the csv files where 1.4GB.
     * The final database contained c. 18 million rows.
@@ -152,7 +152,7 @@ LIMIT 10;
 10 rows in set (2 min 8.14 sec)
 ```
 
-As suspected the top item is an anomaly, with only one patient. Further investigate revealed G82651 is a private nursing *(Burrswood nursing home (2017))* home that accepts some NHS patients. We can assume they only had 1 NHS patient (alongside lots of private patients) at the time.
+As suspected the top item is an anomaly, with only one patient. Further investigate revealed G82651 is a private nursing home that presumably accepts a limited number of NHS patients *(Burrswood nursing home (2017))* . We can assume that only 1 NHS patient was resident at the time.
 
 ```
 SELECT gp_id,
@@ -304,7 +304,7 @@ LIMIT 10;
 10 rows in set (1 hour 38 min 38.25 sec)
 ```
 
-Remarkably, surgery Y01690 only spent just over £0.01 per patient. This seemed strange, so I looked at the number of items prescribed.
+Remarkably, surgery Y01690 only spent just over £0.01 per patient. This seemed bizarre, so I looked at the number of items prescribed.
 
 ```
 SELECT sum(items),
@@ -322,7 +322,7 @@ GROUP BY period;
 2 rows in set (13.11 sec)
 ```
 
-Strangely, Y01690 only prescribed 21 items in January 2016, and 2 items in February 2016. This suggests there may have been extenuating circumstances (maybe the surgery was closed for refurbishment) that would give such low prescription numbers and therefore such low total spend.
+Strangely, Y01690 only prescribed 21 items in January 2016 and 2 items in February 2016. This suggests extenuating circumstances (maybe the surgery was closed for refurbishment) would give such low prescription numbers and therefore such low total spend.
 
 Then I looked for the highest value, again returning the top 10.
 
@@ -353,7 +353,7 @@ LIMIT 10;
 10 rows in set (1 hour 40 min 47.78 sec)
 ```
 
-As with the lowest spent, we have found an anomalous value. G82651 spent over £7k on 1 patient.
+As with the lowest spent, we have found an anomalous value. G82651 spent over £7,000 on 1 patient.
 
 G82651 is the same Burrswood Nursing home from question *b*. We can assume that the sole patient has extensive healthcare needs. Therefore, creating a very high average spend.
 
@@ -361,6 +361,7 @@ G82651 is the same Burrswood Nursing home from question *b*. We can assume that 
 
 ### Final answer:
 
+*(Jan)*   *(Feb)*
 2742049 - 2725157 = 16892
 
 ### Queries
