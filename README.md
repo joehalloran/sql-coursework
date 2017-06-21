@@ -14,7 +14,9 @@ Structure is a beautiful thing. Unfortunately, all beautiful things have their p
 
 Section 1 of this report covers the initial set-up of the database. It details the logic behind a number of strategic decisions that shaped the subsequent stages of the investigation. Section 2 explains how the database was populated with NHS data sets. The commentary in sections 1 and 2 includes the use of Python and the SQL Alchemy toolkit *(SQL Alchemy - The Database Toolkit for Python (2017))* to process and organise the data. Section 3 describes the execution of SQL queries to answer a range of predetermined questions. It explains how ambiguities in these questions were addressed and how results were refined in light these ambiguities. Section 4 looks at ways in which the data could be cleaned and constrained, it explains how attempts to do so were frustrated by inconsistencies in the data and a lack of medical expertise. Section 4 expands upon the allusion to Pandora in the preceding paragraph; it extols the importance of instituting relational structures before users begin inputting data.
 
-## Task 1 & 2: Database set up
+<div style="page-break-after: always;"></div>
+
+## Task 1: Database set up
 
 The data we are handling is historical, and therefore very unlikely to be altered (unless of course some new data was discovered in a dusty filing cabinet in a rarely visited hospital wing). It was, therefore, possible to treat the data as effectively static.
 
@@ -38,6 +40,8 @@ The following tables were created:
 
 INCLUDE TABLES
 
+<div style="page-break-after: always;"></div>
+
 # Task 2: Data upload
 
 Having set up the database, I decided to continue using SQL Alchemy to parse the requisite csv files and populate the database.
@@ -57,6 +61,8 @@ The one great drawback of this approach was the time it took to run the `populat
 
 Despite this huge time delay, this process provided a reliable, automated, and replicable means of populating the databases.
 
+<div style="page-break-after: always;"></div>
+
 # Task 3: Database queries
 
 ## a) How many practices and registered patients are there in the N17 postcode Area?
@@ -70,8 +76,9 @@ There are 7 surgeries in the N17 area with 52248 patients
 This could be answered using the following queries.
 
 ```
-SELECT COUNT(postcode) from surgery where postcode like "n17%"
-
+SELECT COUNT(postcode)
+FROM surgery
+WHERE postcode LIKE "n17%";
 +-----------------+
 | COUNT(postcode) |
 +-----------------+
@@ -81,8 +88,9 @@ SELECT COUNT(postcode) from surgery where postcode like "n17%"
 ```
 
 ```
-select sum(totalAll) from surgery_data where postcode LIKE "N17%";
-
+SELECT sum(totalAll)
+FROM surgery_data
+WHERE postcode LIKE "N17%";
 +---------------+
 | sum(totalAll) |
 +---------------+
@@ -106,30 +114,27 @@ The term "prescribed the most" also requires some consideration. If we are count
 I also decided to return the top 10 practices, to see if the top item is an outlier.
 
 ```
-select
-treatment.practice as "GP id",
-sum(treatment.items) as "Total beta-blockers",
-surgery_data.totalAll as "total patients",
-(sum(treatment.items)/surgery_data.totalAll) as "Average"
-from surgery_data
-inner join treatment on treatment.practice = surgery_data.practice
-where
-bnf_name like "%atenolol%" or
-bnf_name like "%Tenormin%" or
-bnf_name like "%bisoprolol%" or
-bnf_name like "%Cardicor%" or
-bnf_name like "%Emcor%" or
-bnf_name like "%carvedilol%" or
-bnf_name like "%toprolol%" or
-bnf_name like "%Betaloc%" or
-bnf_name like "%Lopresor%" or
-bnf_name like "%nebivolol%" or
-bnf_name like "%Nebilet%" or
-bnf_name like "%Inderal%"
-group by treatment.practice
-order by Average desc
-limit 10;
-
+SELECT treatment.practice AS "GP id",
+       sum(treatment.items) AS "Total beta-blockers",
+       surgery_data.totalAll AS "total patients",
+       (sum(treatment.items)/surgery_data.totalAll) AS "Average"
+FROM surgery_data
+INNER JOIN treatment ON treatment.practice = surgery_data.practice
+WHERE bnf_name LIKE "%atenolol%"
+  OR bnf_name LIKE "%Tenormin%"
+  OR bnf_name LIKE "%bisoprolol%"
+  OR bnf_name LIKE "%Cardicor%"
+  OR bnf_name LIKE "%Emcor%"
+  OR bnf_name LIKE "%carvedilol%"
+  OR bnf_name LIKE "%toprolol%"
+  OR bnf_name LIKE "%Betaloc%"
+  OR bnf_name LIKE "%Lopresor%"
+  OR bnf_name LIKE "%nebivolol%"
+  OR bnf_name LIKE "%Nebilet%"
+  OR bnf_name LIKE "%Inderal%"
+GROUP BY treatment.practice
+ORDER BY Average DESC
+LIMIT 10;
 +--------+---------------------+----------------+---------+
 | GP id  | Total beta-blockers | total patients | Average |
 +--------+---------------------+----------------+---------+
@@ -150,7 +155,11 @@ limit 10;
 As suspected the top item is an anomaly, with only one patient. Further investigate revealed G82651 is a private nursing *(Burrswood nursing home (2017))* home that accepts some NHS patients. We can assume they only had 1 NHS patient (alongside lots of private patients) at the time.
 
 ```
-select gp_id, name, postcode from surgery where gp_id = "G82651";
+SELECT gp_id,
+       name,
+       postcode
+FROM surgery
+WHERE gp_id = "G82651";
 +--------+------------------------+----------+
 | gp_id  | name                   | postcode |
 +--------+------------------------+----------+
@@ -172,13 +181,18 @@ As with question b, the term "most prescribed" requires technical definition. Fo
 The term "prescribed medication" also requires unpicking. I first grouped by "bnf_code".
 
 ```
-select bnf_code, bnf_name, sum(items) as total from treatment group by bnf_code order by total desc limit 1;
+SELECT bnf_code,
+       bnf_name,
+       sum(items) AS total
+FROM treatment
+GROUP BY bnf_code
+ORDER BY total DESC
+LIMIT 1;
 +-----------------+-------------------------+---------+
 | bnf_code        | bnf_name                | total   |
 +-----------------+-------------------------+---------+
 | 0103050P0AAAAAA | Omeprazole_Cap E/C 20mg | 4269629 |
 +-----------------+-------------------------+---------+
-
 1 row in set (26.55 sec)
 ```
 
@@ -187,7 +201,9 @@ However a BNF code describes a particular drug at particular dosage and in a par
 For this reason, and after looking at the Chemical table, I decided the look at the first 9 characters of the BNF code. This seemed to reflect the drug genus, as opposed to exact name and dosage.
 
 ```
-select * from chemical where chemical_sub_code = "0212000Y0";
+SELECT *
+FROM chemical
+WHERE chemical_sub_code = "0212000Y0";
 +-----+-------------------+-------------+
 | id  | chemical_sub_code | name        |
 +-----+-------------------+-------------+
@@ -199,18 +215,30 @@ select * from chemical where chemical_sub_code = "0212000Y0";
 Searching for prescriptions with this code gave me a result of:
 
 ```
-select left(bnf_code,9) as sub_code, bnf_name, sum(items) as total from treatment group by sub_code order by total desc limit 1;
+SELECT left(bnf_code,9) AS sub_code,
+       bnf_name,
+       sum(items) AS total
+FROM treatment
+GROUP BY sub_code
+ORDER BY total DESC
+LIMIT 1;
 +-----------+----------------------+---------+
 | sub_code  | bnf_name             | total   |
 +-----------+----------------------+---------+
 | 0212000Y0 | Simvastatin_Tab 40mg | 5116027 |
 +-----------+----------------------+---------+
+1 row in set (0.00 sec)
 ```
 
 Digging a little further, I found that this drug came in a variety of names and dosages:
 
 ```
-select left(bnf_code,9) as sub_code, bnf_name, count(items) from treatment where left(bnf_code,9) = "0212000Y0" group by bnf_name;
+SELECT left(bnf_code,9) AS sub_code,
+       bnf_name,
+       count(items)
+FROM treatment
+WHERE left(bnf_code,9) = "0212000Y0"
+GROUP BY bnf_name;
 +-----------+------------------------------------+--------------+
 | sub_code  | bnf_name                           | count(items) |
 +-----------+------------------------------------+--------------+
@@ -247,10 +275,18 @@ G82651- £7609.05 per patient
 
 This seemed to be relatively more straightforward to interpret. Find the total spent, find the total patients and divide to find an average.
 
-I began looking at who spent the least, again getting the top 10 to check for anomalies.
+I began looking at who spent the least, again getting the top 10 to check for anomalies. This query took 1hr 38mins!! to return results.
 
 ```
-select treatment.practice, sum(treatment.act_cost) as total, surgery_data.totalAll, (sum(treatment.act_cost)/surgery_data.totalAll) as "Average" from surgery_data inner join treatment on treatment.practice = surgery_data.practice group by treatment.practice order by Average limit 10;
+SELECT treatment.practice,
+       sum(treatment.act_cost) AS total,
+       surgery_data.totalAll,
+       (sum(treatment.act_cost)/surgery_data.totalAll) AS "Average"
+FROM surgery_data
+INNER JOIN treatment ON treatment.practice = surgery_data.practice
+GROUP BY treatment.practice
+ORDER BY Average
+LIMIT 10;
 +----------+--------------------+----------+----------------------+
 | practice | total              | totalAll | Average              |
 +----------+--------------------+----------+----------------------+
@@ -271,7 +307,12 @@ select treatment.practice, sum(treatment.act_cost) as total, surgery_data.totalA
 Remarkably, surgery Y01690 only spent just over £0.01 per patient. This seemed strange, so I looked at the number of items prescribed.
 
 ```
-select sum(items), sum(act_cost), period from treatment where practice = "Y01690" group by period;
+SELECT sum(items),
+       sum(act_cost),
+       period
+FROM treatment
+WHERE practice = "Y01690"
+GROUP BY period;
 +------------+-------------------+--------+
 | sum(items) | sum(act_cost)     | period |
 +------------+-------------------+--------+
@@ -286,7 +327,15 @@ Strangely, Y01690 only prescribed 21 items in January 2016, and 2 items in Febru
 Then I looked for the highest value, again returning the top 10.
 
 ```
-select treatment.practice, sum(treatment.act_cost) as total, surgery_data.totalAll, (sum(treatment.act_cost)/surgery_data.totalAll) as "Average" from surgery_data inner join treatment on treatment.practice = surgery_data.practice group by treatment.practice order by Average desc limit 10;
+SELECT treatment.practice,
+       sum(treatment.act_cost) AS total,
+       surgery_data.totalAll,
+       (sum(treatment.act_cost)/surgery_data.totalAll) AS "Average"
+FROM surgery_data
+INNER JOIN treatment ON treatment.practice = surgery_data.practice
+GROUP BY treatment.practice
+ORDER BY Average DESC
+LIMIT 10;
 +----------+--------------------+----------+--------------------+
 | practice | total              | totalAll | Average            |
 +----------+--------------------+----------+--------------------+
@@ -329,24 +378,25 @@ Here we must define "serotonin reuptake inhibitor". The NHS provides the followi
 
 
 ```
-select sum(items) as "Serotonin prescriptions", period as selective_serotonin from treatment where
-bnf_name like "%citalopram%" or
-bnf_name like "%Cipramil%" or
-bnf_name like "%dapoxetine%" or
-bnf_name like "%Priligy%" or
-bnf_name like "%escitalopram%" or
-bnf_name like "%Cipralex%" or
-bnf_name like "%fluoxetine%" or
-bnf_name like "%Prozac%" or
-bnf_name like "%Oxactin%" or
-bnf_name like "%fluvoxamine%" or
-bnf_name like "%Faverin%" or
-bnf_name like "%paroxetine%" or
-bnf_name like "%Seroxat%" or
-bnf_name like "%sertraline%" or
-bnf_name like "%Lustral%"
-group by period;
-
+SELECT sum(items) AS "Serotonin prescriptions",
+       period AS selective_serotonin
+FROM treatment
+WHERE bnf_name LIKE "%citalopram%"
+  OR bnf_name LIKE "%Cipramil%"
+  OR bnf_name LIKE "%dapoxetine%"
+  OR bnf_name LIKE "%Priligy%"
+  OR bnf_name LIKE "%escitalopram%"
+  OR bnf_name LIKE "%Cipralex%"
+  OR bnf_name LIKE "%fluoxetine%"
+  OR bnf_name LIKE "%Prozac%"
+  OR bnf_name LIKE "%Oxactin%"
+  OR bnf_name LIKE "%fluvoxamine%"
+  OR bnf_name LIKE "%Faverin%"
+  OR bnf_name LIKE "%paroxetine%"
+  OR bnf_name LIKE "%Seroxat%"
+  OR bnf_name LIKE "%sertraline%"
+  OR bnf_name LIKE "%Lustral%"
+GROUP BY period;
 +-------------------------+---------------------+
 | Serotonin prescriptions | selective_serotonin |
 +-------------------------+---------------------+
@@ -361,7 +411,13 @@ group by period;
 The term "prescriptions" again needs interpretation. Again, I have looked at the 'items' value for sake of consistency between answers.
 
 ```
-select practice, sum(items) as "metformin prescriptions" from treatment where bnf_name like "%metformin%" group by practice order by sum(items) desc limit 10;
+SELECT practice,
+       sum(items) AS "metformin prescriptions"
+FROM treatment
+WHERE bnf_name LIKE "%metformin%"
+GROUP BY practice
+ORDER BY sum(items) DESC
+LIMIT 10;
 +----------+-------------------------+
 | practice | metformin prescriptions |
 +----------+-------------------------+
@@ -378,6 +434,8 @@ select practice, sum(items) as "metformin prescriptions" from treatment where bn
 +----------+-------------------------+
 10 rows in set (12.93 sec)
 ```
+
+<div style="page-break-after: always;"></div>
 
 ## Task 4: Observations of Database
 
@@ -403,30 +461,9 @@ Attempts to build this relational structure were frustrated by inconsistencies i
 +--------------------+--------------------+
 ```
 
-There is also a danger in non-subject specialists (i.e. me) making these decisions. Any attempt to link the bnf_codes in the Treatments table with those in the Chemical table would be entirely based on ignorant assumptions, and not grounded in medical expertise. This further highlights the utility of making these decisions in the design phase, where expert advice could be sort.
+There is also a danger in non-subject specialists (i.e. me) making these sorts of decisions. For instance, the assumption that bnf_codes in the Treatments table could be link those in the Chemical table is not supported by medical expertise. This further highlights the utility of making these decisions in the design phase, where expert advice could be sought.
 
-### Task 3.a
-
-There was discrepency in the practice ids is in the surgery_data table and the surgery table.
-// TODO
-
-
-select totalAll, practice from surgery_data where
-practice = "F85017" or
-practice = "F85019" or
-practice = "F85028" or
-practice = "F85030" or
-practice = "F85615" or
-practice = "F85628" or
-practice = "Y04848";
-
-
-# Refs
-
-https://stackoverflow.com/questions/29355674/how-to-connect-mysql-database-using-pythonsqlalchemy-remotely
-https://stackoverflow.com/questions/12748926/sqlalchemy-check-if-object-is-already-present-in-table
-https://stackoverflow.com/questions/2594829/finding-duplicate-values-in-a-sql-table
-
+<div style="page-break-after: always;"></div>
 
 ## Bibliograph
 
@@ -455,6 +492,13 @@ https://www.sqlalchemy.org/ (Accessed: 13th June 2017)
 * SSRIs - NHS (2017). Available at:<br />
 http://www.nhs.uk/conditions/SSRIs-(selective-serotonin-reuptake-inhibitors)/Pages/Introduction.aspx (Accessed: 15th June 2017)
 
+<div style="page-break-after: always;"></div>
+
+## Appendix 1
+
+## Appendix 2
+
+## Appendix 3
 # Set up
 
 Vagrant PHP and Mysql
