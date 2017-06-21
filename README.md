@@ -361,7 +361,6 @@ G82651 is the same Burrswood Nursing home from question *b*. We can assume that 
 
 ### Final answer:
 
-*(Jan)*   *(Feb)*
 2742049 - 2725157 = 16892
 
 ### Queries
@@ -377,6 +376,7 @@ Here we must define "serotonin reuptake inhibitor". The NHS provides the followi
 * paroxetine (Seroxat)
 * sertraline (Lustral)
 
+Which generated this query.
 
 ```
 SELECT sum(items) AS "Serotonin prescriptions",
@@ -407,9 +407,11 @@ GROUP BY period;
 2 rows in set (27.81 sec)
 ```
 
+Subtracting on value from the other gives the final answer.
+
 ## f) Visualise the top 10 practices by number of metformin prescriptions throughout the entire period.
 
-The term "prescriptions" again needs interpretation. Again, I have looked at the 'items' value for sake of consistency between answers.
+As above, The term "prescriptions" needs interpretation. I have again looked at the 'items' value for sake of consistency between answers.
 
 ```
 SELECT practice,
