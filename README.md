@@ -12,13 +12,13 @@ This report is, in essence, a soliloquy. It reveals though processes as much as 
 
 Structure is a beautiful thing. Unfortunately, all beautiful things have their price. In this case, the price of structure is foresight. In this investigation of NHS data, we will learn that imposing structure on large unstructured datasets is difficult. Structure should have been defined and imposed before users (thousands of health professionals working across the NHS) start inputting data in an inconsistent way. As Pandora discovered, once opened, the box is hard to shut.
 
-Section 1 of this report covers the initial set-up of the database. It details the logic behind a number of strategic decisions that shaped the subsequent stages of the investigation. Section 2 explains how the database was populated with NHS data sets. The commentary in sections 1 and 2 includes the use of Python and the SQL Alchemy toolkit *(SQL Alchemy - The Database Toolkit for Python (2017))* to process and organise the data. Section 3 describes the execution of SQL queries to answer a range of predetermined questions. It explains how ambiguities in these questions were addressed and how results were refined in light these ambiguities. Section 4 looks at ways in which the data could be cleaned and constrained, it explains how attempts to do so were frustrated by inconsistencies in the data and a lack of medical expertise. Section 4 expands upon the allusion to Pandora in the preceding paragraph; it extols the importance of instituting relational structures before using begin inputting data.
+Section 1 of this report covers the initial set-up of the database. It details the logic behind a number of strategic decisions that shaped the subsequent stages of the investigation. Section 2 explains how the database was populated with NHS data sets. The commentary in sections 1 and 2 includes the use of Python and the SQL Alchemy toolkit *(SQL Alchemy - The Database Toolkit for Python (2017))* to process and organise the data. Section 3 describes the execution of SQL queries to answer a range of predetermined questions. It explains how ambiguities in these questions were addressed and how results were refined in light these ambiguities. Section 4 looks at ways in which the data could be cleaned and constrained, it explains how attempts to do so were frustrated by inconsistencies in the data and a lack of medical expertise. Section 4 expands upon the allusion to Pandora in the preceding paragraph; it extols the importance of instituting relational structures before users begin inputting data.
 
 ## Task 1 & 2: Database set up
 
 The data we are handling is historical, and therefore very unlikely to be altered (unless of course some new data was discovered in a dusty filing cabinet in a rarely visited hospital wing). It was, therefore, possible to treat the data as effectively static.
 
-With this in mind and safe in the knowledge we do not need to worry about additions to the data, I wanted to create an isolated and automated (where possible) means of setting up the database, so it could be easily rebuilt if problems were discovered in the configuration.
+With this in mind, I wanted to create an isolated and automated (where possible) means of setting up the database, so it could be easily rebuilt if problems were discovered in the configuration.
 
 A full description of the process, including scripts written is included as an appendix. In addition, you can find a summary of the process below.
 
@@ -26,9 +26,9 @@ For the reasons outlined above (isolated, replicable, and automated). I created 
 
 Analysis of the data, lead to a simple strategy:
 1. Ignore arbitrary division of data into months
-  * We were given two sets of spreadsheets from January and February 2017.
-  * These spreadsheets were not essentially separate, and therefore should be included in the same table.
-  * In some cases, spreadsheets contained duplicate and unneccesary data. This should not be included in the database.
+    * We were given two sets of spreadsheets from January and February 2017.
+    * These spreadsheets were not essentially separate, and therefore should be included in the same table.
+    * In some cases, spreadsheets contained duplicate and unneccesary data. This should not be included in the database.
 2. Table structure should reflect spreadsheet structure.
   * Table heading should become database fields.
 
