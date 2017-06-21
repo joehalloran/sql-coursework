@@ -4,29 +4,40 @@ Joe Halloran
 
 ## Exectuive summary
 
-This communique chronicles the vagaries of using SQL to investigate open source NHS big data. It covers the entire process of finding NHS data in the public domain, building and populating a database, querying said database, and includes some observations on the coherence and consistency of the data.
+This report is, in essence, a soliloquy. It reveals though processes as much as it describes actions. Superficially, it documents an investigation into NHS big data, via the medium of SQL. It records the process of building, populating, and querying a database. However it more about strategy and decision making the guided that process. It also includes some observations on the importance of coherent and consistent data.
 
 <div style="page-break-after: always;"></div>
 
 ## Introduction
 
-Structure is a beautiful thing. Unfortunately, all beautiful things have their price. In this case the price of structure is foresight. In this investigation of NHS data, we will learn that imposing structure on large unstructured datasets is difficult. Structure should have been defined and imposed before users (thousands of health professionals working across the NHS) start inputting data in an inconsistent way. As Pandora discovered, once opened, the box is hard to shut.
+Structure is a beautiful thing. Unfortunately, all beautiful things have their price. In this case, the price of structure is foresight. In this investigation of NHS data, we will learn that imposing structure on large unstructured datasets is difficult. Structure should have been defined and imposed before users (thousands of health professionals working across the NHS) start inputting data in an inconsistent way. As Pandora discovered, once opened, the box is hard to shut.
 
-Section 1 of this report covers the inital set-up of the database. It details the logic behind a number of strategic decisions that shaped the subsequent stages of the investigation. Section 2 explains how the database was populated with NHS data sets. It goes into some detail on the use of Python and the SQL Alchemy toolkit *(SQL Alchemy - The Database Toolkit for Python (2017))* to process and organise the data. Section 3 describes the execution of SQL queries to answer a range of predetermined questions. It explains how ambiguities in these questions were addressed and how results were refined in light these ambiguities. Section 4 looks at ways in which the data could be cleaned and constrained, it explains how attempts to do so were frustrated by inconsistencies in the data and a lack of medical expertise. Section 4 illuminates the allusion to Pandora in the preceding paragraph; it extols the importance of instituting relational structures before using begin inputting data.
+Section 1 of this report covers the initial set-up of the database. It details the logic behind a number of strategic decisions that shaped the subsequent stages of the investigation. Section 2 explains how the database was populated with NHS data sets. It goes into some detail on the use of Python and the SQL Alchemy toolkit *(SQL Alchemy - The Database Toolkit for Python (2017))* to process and organise the data. Section 3 describes the execution of SQL queries to answer a range of predetermined questions. It explains how ambiguities in these questions were addressed and how results were refined in light these ambiguities. Section 4 looks at ways in which the data could be cleaned and constrained, it explains how attempts to do so were frustrated by inconsistencies in the data and a lack of medical expertise. Section 4 illuminates the allusion to Pandora in the preceding paragraph; it extols the importance of instituting relational structures before using begin inputting data.
 
 ## Task 1 & 2: Database set up and data upload
 
-The data we are handling is historical, and therefore very unlikely to be altered (unless of course some new data was discovered in a dusty filing cabinet in a rarely visited hospital wing). Therefore we can treat the data as effectively static.
+The data we are handling is historical, and therefore very unlikely to be altered (unless of course some new data was discovered in a dusty filing cabinet in a rarely visited hospital wing). It was, therefore, possible to treat the data as effectively static.
 
 With this in mind and safe in the knowledge we do not need to worry about additions to the data, I wanted to create an isolated and automated (where possible) means of setting up the database, so it could be easily rebuilt if problems were discovered in the configuration.
 
 A full description of the process, including scripts written is included as an appendix. In addition, you can find a summary of the process below.
 
-For the reasons outlined above (isolated, replicable, and automated). I created a virtual server using Vagrant *(Vagrant by Hashicorp (2017))* running Ubuntu 14.04 server addition *Ubuntu 14.04.5 LTS (2017)*. I then set up a LAMP server *(LAMP (software bundle) - Wikipedia (2017))* and installed phpmyadmin *(How to install phpmyadmin on ubuntu - Liquid Web (2017))* to give me GUI access to the DB.
+For the reasons outlined above (isolated, replicable, and automated). I created a virtual server using Vagrant *(Vagrant by Hashicorp (2017))* running Ubuntu 14.04 server addition *Ubuntu 14.04.5 LTS (2017)*. I then set up a LAMP server *(LAMP (software bundle) - Wikipedia (2017))* and installed phpmyadmin *(How to install phpmyadmin on ubuntu - Liquid Web (2017))* to give me GUI access to the MySQL server.
 
-I then wanted to create a script that would set up the database and populate the tables with data from the spreadsheet files provided for the task. I decided to use the Python SQL Alchemy module *(SQL Alchemy - The Database Toolkit for Python (2017))*, which provides an ORM. This is a useful means of  visualising the database by creating tables as Python classes.
+Analysis of the data, lead to a simple strategy:
+1. Ignore arbitrary division of data into months
+  * We 
 
-I created two scripts `database_setup.py` (creates tables) and `populate_db.py` (parses csv files and uploads to databases). This allowed me to search for and eliminate duplicates (for instance in the two files that list all registered gp surgeries, were >99% duplicated).
+I then wanted to create a script that would set up the database. I used the Python SQL Alchemy module *(SQL Alchemy - The Database Toolkit for Python (2017))*, which provides an ORM. This is a useful means of  visualising the database by creating tables as Python classes. After running the `database_setup.py` script (see appendix ____??_____) the following tables were created.
+
+This table structure ignores the arbitary division of data into months (we had a set of spreadsheets for both Janaurat a)
+
+
+# Task 2: Data upload
+
+Having set up the database, I decided to continue using SQL Alchemy to parse the requisite csv files, containing NHS data from January and February 2016) and populate the data base.
+
+This extra layer of abstraction allowed me to merge spreadsheets that contained data arbitrailyu separated by month (we had spreadsheets) `populate_db.py` (parses csv files and uploads to databases). This allowed me to search for and eliminate duplicates (for instance in the two files that list all registered gp surgeries, were >99% duplicated).
 
 The one great drawback of this approach was the time it took to run the `populate_db.py` script. It took over 8 hours!! to complete the process of populating the tables with data. This is for a number of reasons:
 1. The sheer scale of the data: two of the csv files where 1.4GB.
