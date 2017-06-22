@@ -4,17 +4,19 @@ Joe Halloran
 
 ## Exectuive summary
 
-This report is, in essence, a soliloquy. It reveals thought processes as much as it describes actions. Superficially, it documents an investigation into NHS big data, via the medium of SQL. It records the process of building, populating, and querying a database. However it is more about the strategy and decision making the guided that process. It also includes some observations on the importance of coherent and consistent data.
+This report is, in essence, a soliloquy. It reveals thought processes as much as it describes actions. Superficially, it documents an investigation into NHS big data, via the medium of SQL. It records the process of building, populating, and querying a database. However, this report is more about the strategy and decision making that guided the process. It also includes some observations on the importance of coherent and consistent data.
 
 <div style="page-break-after: always;"></div>
 
 ## Introduction
 
-Structure is a beautiful thing. Unfortunately, all beautiful things have their price. In this case, the price of structure is foresight. In this investigation of NHS data, we will learn that imposing structure on large unstructured datasets is difficult. Structure should have been defined and imposed before users (thousands of health professionals working across the NHS) start inputting data in an inconsistent way. As Pandora discovered, once opened, the box is hard to shut.
+Structure is a beautiful thing. Unfortunately, all beautiful things have their price. In this case, the price of structure is foresight.
 
-Section 1 of this report covers the initial set-up of the database. It details the logic behind a number of strategic decisions that shaped the subsequent stages of the investigation. Section 2 explains how the database was populated with NHS data sets. The commentary in sections 1 and 2 includes the use of Python and the SQL Alchemy toolkit *(SQL Alchemy - The Database Toolkit for Python (2017))* to process and organise the data. Section 3 describes the execution of SQL queries to answer a range of predetermined questions. It explains how ambiguities in these questions were addressed and how results were refined in light these ambiguities. Section 4 looks at ways in which the data could be cleaned and constrained, it explains how attempts to do so were frustrated by inconsistencies in the data and a lack of medical expertise. Section 4 expands upon the allusion to Pandora in the preceding paragraph; it extols the importance of instituting relational structures before users begin inputting data.
+In this investigation of NHS data, we will learn that imposing structure on large unstructured datasets is difficult. Structure should have been defined and imposed before users (thousands of health professionals working across the NHS) start inputting data in an inconsistent way. As Pandora discovered, once opened, the box is hard to shut.
 
-This report also includes some Apprendices that detail the technical steps required to set up the database system. They are as much for my reference, as they are for public consumption.
+Section 1 of this report covers the initial set-up of the database. It details the logic behind a number of strategic decisions that shaped the subsequent stages of the investigation. Section 2 explains how the database was populated with NHS data sets. Section 3 describes the execution of SQL queries to answer a range of predetermined questions. It explains how ambiguities in these questions were addressed and how results were refined in light these ambiguities. Section 4 looks at ways in which the data could be cleaned and constrained, it explains how attempts to do so were frustrated by inconsistencies in the data and a lack of medical expertise. Section 4 expands upon the allusion to Pandora in the preceding paragraph; it extols the importance of instituting relational structures before users begin inputting data.
+
+This report also includes appendices that detail the technical steps required to set up the database system. They are as much for my reference, as they are for public consumption. Read them at your peril.
 
 <div style="page-break-after: always;"></div>
 
@@ -24,19 +26,20 @@ The data we are handling is historical, and therefore very unlikely to be altere
 
 With this in mind, I wanted to create an isolated and automated (where possible) means of setting up the database, so it could be easily rebuilt if problems were discovered in the configuration.
 
-A full description of the process, including scripts written is included as an appendix. In addition, you can find a summary of the process below.
+A full description of the process is listed in Appendix 1. In addition, you can find a summary of the process below.
 
-For the reasons outlined above (isolated, replicable, and automated), I created a virtual server using Vagrant *(Vagrant by Hashicorp (2017))* running Ubuntu 14.04 *Ubuntu 14.04.5 LTS (2017)*. I then set up a LAMP server *(LAMP (software bundle) - Wikipedia (2017))* and installed phpmyadmin *(How to install phpmyadmin on ubuntu - Liquid Web (2017))* to give me GUI access to the MySQL server.
+For the reasons outlined above (isolated, replicable, and automated), I created a virtual server using Vagrant *(Vagrant by Hashicorp (2017))* running Ubuntu 14.04 *Ubuntu 14.04.5 LTS (2017)*. I then set up a LAMP server *(LAMP (software bundle) - Wikipedia (2017))* and installed phpmyadmin *(How to install phpmyadmin on ubuntu - Liquid Web (2017))* to give me GUI access to the MySQL server from the host machine.
 
-Analysis of the data, lead to a simple strategy:
+Analysis of the data, lead to a simple strategy for structuring the database tables:
+
 1. Ignore arbitrary division of data into months
     * We were given two sets of spreadsheets from January and February 2016.
     * These spreadsheets were isomorphic and therefore should be included in the same table.
-    * In some cases, spreadsheets contained duplicate and unneccesary data. Duplicate data should not be included in the database.
+    * In some cases, spreadsheets contained duplicate and unnecessary data. Duplicate data should not be included in the database.
 2. Table structure should reflect spreadsheet structure.
     * Table heading should become database fields.
 
-With this strategy, I then wanted to create a script that would set up the database. I used the Python SQL Alchemy module *(SQL Alchemy - The Database Toolkit for Python (2017))*, which provides an ORM. This offers a means of visualising the database by creating tables with Python classes. The `database_setup.py` script (see appendix ____??_____) was created for this purpose.
+With this strategy, I then wanted to create a script that would set up the database tables. I used the Python SQL Alchemy module *(SQL Alchemy - The Database Toolkit for Python (2017))*, which provides an ORM. This offers a means of visualising the database by creating tables as Python classes. The `database_setup.py` script (see Appendix 3) was created for this purpose.
 
 The following tables were created:
 
@@ -48,7 +51,7 @@ INCLUDE TABLES
 
 Having set up the database, I decided to continue using SQL Alchemy to parse the requisite csv files and populate the database.
 
-This extra layer of abstraction allowed me to merge spreadsheets separated by month and, where appropriate, ignore duplcates. For instance, the two files that list all GPs in the UK were >99% duplicated. This lead to the creation of the `populate_db.py` script (see appendix _____**_____).
+This extra layer of abstraction allowed me to merge spreadsheets separated by month and, where appropriate, ignore duplicates. For instance, the two files that listed all GPs in the UK were more than 99% duplicated. This lead to the creation of the `populate_db.py` script (see Appendix 4).
 
 The one great drawback of this approach was the time taken to run the `populate_db.py` script. It took over 8 hours!! to complete the process of populating the tables with data. This is for a number of reasons:
 1. **The sheer scale of the data:**
@@ -174,7 +177,7 @@ WHERE gp_id = "G82651";
 
 ### Final answer
 
-Simvastatin, and related drugs with chemical code 0212000Y0, was prescribed 5116027 times.
+Simvastatin, and related drugs with chemical code 0212000Y0, were prescribed 5116027 times.
 
 ### Queries
 
@@ -200,17 +203,17 @@ LIMIT 1;
 
 However a BNF code describes a particular drug at particular dosage and in a particular form. This seemed too narrow, as the same drug, when prescribed in different forms and at quantities, is counted separately.
 
-For this reason, and after looking at the Chemical table, I decided the look at the first 9 characters of the BNF code. This seemed to reflect the drug genus, as opposed to exact name and dosage.
+For this reason, and after looking at the Chemical table, I decided the look at the first 9 characters of the BNF code. This seemed to reflect the drug genus, as opposed to exact name and dosage. For example:
 
 ```
 SELECT *
 FROM chemical
-WHERE chemical_sub_code = "0212000Y0";
-+-----+-------------------+-------------+
-| id  | chemical_sub_code | name        |
-+-----+-------------------+-------------+
-| 548 | 0212000Y0         | Simvastatin |
-+-----+-------------------+-------------+
+LIMIT 1;
++----+-------------------+-----------------+
+| id | chemical_sub_code | name            |
++----+-------------------+-----------------+
+|  1 | 0101010A0         | Alexitol Sodium |
++----+-------------------+-----------------+
 1 row in set (0.00 sec)
 ```
 
@@ -326,7 +329,7 @@ GROUP BY period;
 
 Strangely, Y01690 only prescribed 21 items in January 2016 and 2 items in February 2016. This suggests extenuating circumstances (maybe the surgery was closed for refurbishment) would give such low prescription numbers and therefore such low total spend.
 
-Then I looked for the highest value, again returning the top 10.
+I then looked for the highest value, again returning the top 10.
 
 ```
 SELECT treatment.practice,
@@ -378,7 +381,7 @@ Here we must define "serotonin reuptake inhibitor". The NHS provides the followi
 * paroxetine (Seroxat)
 * sertraline (Lustral)
 
-Which generated this query.
+Which lead to this query.
 
 ```
 SELECT sum(items) AS "Serotonin prescriptions",
@@ -490,9 +493,11 @@ https://httpd.apache.org/ (Accessed: 13th June 2017)
 * SQL Alchemy - The Database Toolkit for Python (2017). Available at:<br />
 https://www.sqlalchemy.org/ (Accessed: 13th June 2017)
 
-* Beta-blockers - NHS Choices (2017). Available at:<br /> http://www.nhs.uk/conditions/beta-blockers/pages/introduction.aspx
+* Beta-blockers - NHS Choices (2017). Available at:<br />
+http://www.nhs.uk/conditions/beta-blockers/pages/introduction.aspx (Accessed: 13th June 2017)
 
-* http://www.burrswood.org.uk/
+* Burrswood | Burrswood Hospital, Kent. Available at:<br />
+http://www.burrswood.org.uk/ (Accessed: 22nd June 2017)
 
 * SSRIs - NHS (2017). Available at:<br />
 http://www.nhs.uk/conditions/SSRIs-(selective-serotonin-reuptake-inhibitors)/Pages/Introduction.aspx (Accessed: 15th June 2017)
@@ -503,25 +508,25 @@ http://www.nhs.uk/conditions/SSRIs-(selective-serotonin-reuptake-inhibitors)/Pag
 
 ### Set up vagrant
 
-* [Install vagrant](https://www.vagrantup.com/docs/installation/)
+* Install [vagrant](https://www.vagrantup.com/docs/installation/)
 * `mkdir [folder_name]`
 * `cd [folder_name]`
 * `mkdir public` (this will become the webserver root)
 * `vagrant init`
 * `vagrant box add ubuntu/trusty64` (other boxes available on vagrant website)
-* Open vagrantfile in [folder_name]. Add this:
+* Open Vagrantfile in [folder_name]. Add this:
 ```
 Vagrant.configure("2") do |config|
   config.vm.box = "ubuntu/trusty64"
 end
 ```
 * `vagrant up`
-* Add this to the vagrantFile [CHANGE HOST NUMBER]:
+* Add this to the Vagrantfile:
 ```
 PORT FORWARDING
 Vagrant.configure("2") do |config|
   config.vm.box = "ubuntu/trusty64"
-  config.vm.network :forwarded_port, guest: 80, host: 4567
+  config.vm.network :forwarded_port, guest: 80, host: 4567 //Choose host num
 end
 ```
 * `vagrant reload --provision`
@@ -554,18 +559,22 @@ DocumentRoot /vagrant/public
 
 ### Set up PHP My admin
 * `sudo apt-get install phpmyadmin php-mbstring php-gettext`
-* sudo nano apache2.conf -- JOE, WHAT IS THIS FOR??
+* `sudo nano apache2.conf` Add this to bottom line
+```
+Include /etc/phpmyadmin/apache.conf
+```
+* `sudo service apache2 restart`
 
 ### Create database
 * `mysql -u root -p`
 * `mysql> create database PrescriptionsDB;`
 * `exit` (you can exit MySQL server and use PHP My Admin to access DB)
 * `logout` (leave virtual machine)
-* Add index.html (see appendix 2) to [folder_name]/public on host machine
+* Add index.html (see appendix 2) to `[folder_name]/public` on host machine
 * In your browser, navigate to localhost:[PORT_NUMBER_YOU_SELECTED_EARLIER]
 * Log in to PHP My Admin
 
-## Appendix 2 - Index.html
+## Appendix 2 - index.html
 
 ```html
 <!DOCTYPE html>
@@ -587,7 +596,7 @@ DocumentRoot /vagrant/public
 ### Add script
 
 * Navigate to [folder_name] on host machine
-* Add `detabase_setup.py`
+* Add `database_setup.py` (see below)
 
 ### Install Python modules & run script
 
@@ -657,14 +666,15 @@ class Treatment(Base):
 	quantity = Column(Integer, nullable = False, unique = False)
 	period = Column(String(20), nullable = False, unique = False)
 
-engine = create_engine('mysql+pymysql://root:root@127.0.0.1:3306/PrescriptionsDB')
+engine = create_engine(
+    'mysql+pymysql://root:root@127.0.0.1:3306/PrescriptionsDB')
 Base.metadata.create_all(engine)
 ```
 
 ## Appendix 4
 
-* Ensure `populate_db.py` is in [folder_name] on host machine
-* From with `/vagrant` folder on virtual machine
+* Ensure `populate_db.py` (see below) is in [folder_name] on host machine
+* From within `/vagrant` folder on virtual machine
 * `python populate_db.py`
 
 ### populate_db.py
@@ -691,7 +701,8 @@ def readChemicals(file):
 class FileReader:
 
 	def getSession(self):
-		engine = create_engine('mysql+pymysql://root:root@127.0.0.1:3306/PrescriptionsDB')
+		engine = create_engine(
+      'mysql+pymysql://root:root@127.0.0.1:3306/PrescriptionsDB')
 		Base.metadata.bind = engine
 		DBSession = sessionmaker(bind=engine)
 		session = DBSession()
@@ -706,9 +717,11 @@ class FileReader:
 		first_line = f.readline() ## SKIP HEADERS
 		for line in f:
 			items = line.split(",")
-			chem_sub, name = self.stripWhiteSpaces(items[0]), self.stripWhiteSpaces(items[1])
+			chem_sub = self.stripWhiteSpaces(items[0])
+      name = self.stripWhiteSpaces(items[1])
 			# if chem_sub does not exist in db
-			if session.query(Chemical.id).filter(Chemical.chemical_sub_code==chem_sub).count() == 0:
+			if session.query(
+        Chemical.id).filter(Chemical.chemical_sub_code==chem_sub).count() == 0:
 				try:
 					chem = Chemical(chemical_sub_code = chem_sub, name=name)
 					session.add(chem)
