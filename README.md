@@ -43,7 +43,75 @@ With this strategy, I then wanted to create a script that would set up the datab
 
 The following tables were created:
 
-INCLUDE TABLES
+```
+show tables;
++---------------------------+
+| Tables_in_PrescriptionsDB |
++---------------------------+
+| chemical                  |
+| surgery                   |
+| surgery_data              |
+| treatment                 |
++---------------------------+
+
+describe chemical;
++-------------------+--------------+------+-----+---------+----------------+
+| Field             | Type         | Null | Key | Default | Extra          |
++-------------------+--------------+------+-----+---------+----------------+
+| id                | int(11)      | NO   | PRI | NULL    | auto_increment |
+| chemical_sub_code | varchar(20)  | NO   | UNI | NULL    |                |
+| name              | varchar(100) | NO   |     | NULL    |                |
++-------------------+--------------+------+-----+---------+----------------+
+
+describe surgery;
++------------+--------------+------+-----+---------+----------------+
+| Field      | Type         | Null | Key | Default | Extra          |
++------------+--------------+------+-----+---------+----------------+
+| id         | int(11)      | NO   | PRI | NULL    | auto_increment |
+| gp_id      | varchar(20)  | YES  | UNI | NULL    |                |
+| name       | varchar(100) | NO   |     | NULL    |                |
+| addressOne | varchar(100) | NO   |     | NULL    |                |
+| addressTwo | varchar(100) | NO   |     | NULL    |                |
+| city       | varchar(100) | NO   |     | NULL    |                |
+| county     | varchar(100) | NO   |     | NULL    |                |
+| postcode   | varchar(20)  | NO   |     | NULL    |                |
++------------+--------------+------+-----+---------+----------------+
+
+describe surgery_data;
++-----------------------+--------------+------+-----+---------+----------------+
+| Field                 | Type         | Null | Key | Default | Extra          |
++-----------------------+--------------+------+-----+---------+----------------+
+| id                    | int(11)      | NO   | PRI | NULL    | auto_increment |
+| practice              | varchar(20)  | NO   |     | NULL    |                |
+| postcode              | varchar(20)  | NO   |     | NULL    |                |
+| ons_ccg_code          | varchar(20)  | NO   |     | NULL    |                |
+| ccg_code              | varchar(20)  | NO   |     | NULL    |                |
+| ons_region_code       | varchar(100) | NO   |     | NULL    |                |
+| nhse_region_code      | varchar(100) | NO   |     | NULL    |                |
+| ons_comm_rgn_code     | varchar(100) | NO   |     | NULL    |                |
+| nhse_comm_region_code | varchar(100) | NO   |     | NULL    |                |
+| totalAll              | int(11)      | YES  |     | NULL    |                |
+| totalMale             | int(11)      | YES  |     | NULL    |                |
+| totalFemale           | int(11)      | YES  |     | NULL    |                |
++-----------------------+--------------+------+-----+---------+----------------+
+
+describe treatment;
++----------+--------------+------+-----+---------+----------------+
+| Field    | Type         | Null | Key | Default | Extra          |
++----------+--------------+------+-----+---------+----------------+
+| id       | int(11)      | NO   | PRI | NULL    | auto_increment |
+| sha      | varchar(10)  | NO   |     | NULL    |                |
+| pct      | varchar(20)  | NO   |     | NULL    |                |
+| practice | varchar(20)  | NO   |     | NULL    |                |
+| bnf_code | varchar(20)  | NO   |     | NULL    |                |
+| bnf_name | varchar(100) | NO   |     | NULL    |                |
+| items    | int(11)      | NO   |     | NULL    |                |
+| nic      | float        | NO   |     | NULL    |                |
+| act_cost | float        | NO   |     | NULL    |                |
+| quantity | int(11)      | NO   |     | NULL    |                |
+| period   | varchar(20)  | NO   |     | NULL    |                |
++----------+--------------+------+-----+---------+----------------+
+```
 
 <div style="page-break-after: always;"></div>
 
@@ -463,9 +531,9 @@ Attempts to build this relational structure were frustrated by inconsistencies i
 | F85019             | F85019             |
 | F85028             | F85028             |
 | F85030             | F85030             |
-| F85615             |F85615              |
+| F85615             | F85615             |
 | F85628             | F85628             |
-| F85699             | Y04848             |
+| F85699             | Y04848             | // Does not match
 +--------------------+--------------------+
 ```
 
@@ -503,6 +571,8 @@ http://www.burrswood.org.uk/ (Accessed: 22nd June 2017)
 http://www.nhs.uk/conditions/SSRIs-(selective-serotonin-reuptake-inhibitors)/Pages/Introduction.aspx (Accessed: 15th June 2017)
 
 <div style="page-break-after: always;"></div>
+
+# Appendices
 
 ## Appendix 1 - How to setup a LAMP server with Vagrant.
 
@@ -574,6 +644,8 @@ Include /etc/phpmyadmin/apache.conf
 * In your browser, navigate to localhost:[PORT_NUMBER_YOU_SELECTED_EARLIER]
 * Log in to PHP My Admin
 
+<div style="page-break-after: always;"></div>
+
 ## Appendix 2 - index.html
 
 ```html
@@ -590,6 +662,7 @@ Include /etc/phpmyadmin/apache.conf
   </body>
 </html>
 ```
+<div style="page-break-after: always;"></div>
 
 ## Appendix 3 - Build database with Python & SQL Alchemy
 
@@ -670,6 +743,8 @@ engine = create_engine(
     'mysql+pymysql://root:root@127.0.0.1:3306/PrescriptionsDB')
 Base.metadata.create_all(engine)
 ```
+
+<div style="page-break-after: always;"></div>
 
 ## Appendix 4
 
@@ -859,7 +934,7 @@ x.readTreatment("T201602PDPIBNFT.CSV", 2) ## Int input is  fudge to make PK
 print("COMPLETED: " + strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime()))
 ```
 
-### Report from populate_db run on 11th June 2017
+### Report from populate_db.py run on 11th June 2017
 ```
 BEGIN EXECUTION AT: Sun, 11 Jun 2017 07:29:17 +0000
 
@@ -899,5 +974,6 @@ BEGIN LARGE FILE 1: Sun, 11 Jun 2017 12:00:56 +0000
 ('Lines parsed: ', 10037913)
 ('Errors: ', 0)
 ('Duplicates: ', 0)
+
 COMPLETED: Sun, 11 Jun 2017 15:51:15 +0000
 ```
