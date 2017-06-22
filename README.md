@@ -20,7 +20,7 @@ This report also includes appendices that detail the technical steps required to
 
 <div style="page-break-after: always;"></div>
 
-## Task 1: Database setup
+## Section 1: Database setup
 
 The data we are handling is historical, and therefore very unlikely to be altered (unless of course some new data was discovered in a dusty filing cabinet in a rarely visited hospital wing). It was, therefore, possible to treat the data as effectively static.
 
@@ -41,7 +41,7 @@ Analysis of the data, lead to a simple strategy for structuring the database tab
 
 With this strategy, I then wanted to create a script that would set up the database tables. I used the Python SQL Alchemy module *(SQL Alchemy - The Database Toolkit for Python (2017))*, which provides an ORM. This offers a means of visualising the database by creating tables as Python classes. The `database_setup.py` script (see Appendix 3) was created for this purpose.
 
-The following tables were created:
+The following database was created:
 
 ```
 show tables;
@@ -115,7 +115,7 @@ describe treatment;
 
 <div style="page-break-after: always;"></div>
 
-# Task 2: Data upload
+# Section 2: Data upload
 
 Having set up the database, I decided to continue using SQL Alchemy to parse the requisite CSV files and populate the database.
 
@@ -136,7 +136,7 @@ Despite this huge time delay, this process provided a reliable, automated, and r
 
 <div style="page-break-after: always;"></div>
 
-# Task 3: Database queries
+# Section 3: Database queries
 
 ## a) How many practices and registered patients are there in the N17 postcode Area?
 
@@ -513,7 +513,7 @@ LIMIT 10;
 
 <div style="page-break-after: always;"></div>
 
-## Task 4: Observations of Database
+## Section 4: Observations of Database
 
 Enforcing more structure on such a large data set would allow for relationships between tables and therefore generate a more efficient database.
 
@@ -538,6 +538,16 @@ Attempts to build this relational structure were frustrated by inconsistencies i
 ```
 
 There is also a danger in non-subject specialists (i.e. me) making these sorts of decisions. For instance, the assumption that bnf_codes in the Treatments table could be linked to those in the Chemical table is not supported by medical expertise. This further highlights the utility of making these decisions in the design phase, where expert advice can be sought.
+
+<div style="page-break-after: always;"></div>
+
+## Section 5: Conclusion
+
+This report (hopefully) provides a thorough account of the process of building and querying a database containing NHS data. There are two key themes that emerged throughout the process. The first is that of instituting structure before users begin inputting data. It would be easier to answer the questions above if the data had been given a relational structure from the very beginning. This point was expounding upon in Section 4; trying to impose this structure once the data input has begun is very difficult.
+
+The second theme, which was alluded to, but never subject to explicit and direct analysis is that of vagueness, ambiguity, and interpretation. The SQL queries supplied in Section 3 were all coloured by this issue. In each case, there was a phrase that needed picking apart and second guessing. All answers, therefore, lack precision as they are dependent on these imperfect deductions. This problem is stark in computing; logic machines are characterised by exactitude. But this is not a computer problem, it is a human one; it is a direct consequence of language and meaning.
+
+Therefore, I fear this problem is insoluble, as the philosopher Timothy Williamson says: "we can make language less vague, we cannot make it perfectly precise" *(Williamson, pp. 1)*. With this eternal imperfection in mind, I submit this report for your judicious consideration.
 
 <div style="page-break-after: always;"></div>
 
@@ -569,6 +579,8 @@ http://www.burrswood.org.uk/ (Accessed: 22nd June 2017)
 
 * SSRIs - NHS (2017). Available at:<br />
 http://www.nhs.uk/conditions/SSRIs-(selective-serotonin-reuptake-inhibitors)/Pages/Introduction.aspx (Accessed: 15th June 2017)
+
+* Williamson, Timothy. Vagueness. London [u.a.]: Routledge, 2005. Print.
 
 <div style="page-break-after: always;"></div>
 
