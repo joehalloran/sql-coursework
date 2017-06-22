@@ -1,8 +1,8 @@
-# TITLE
+# SQL analysis of NHS big data
 #### Database Systems coursework
 Joe Halloran
 
-## Exectuive summary
+## Executive summary
 
 This report is, in essence, a soliloquy. It reveals thought processes as much as it describes actions. Superficially, it documents an investigation into NHS big data, via the medium of SQL. It records the process of building, populating, and querying a database. However, this report is more about the strategy and decision making that guided the process. It also includes some observations on the importance of coherent and consistent data.
 
@@ -20,7 +20,7 @@ This report also includes appendices that detail the technical steps required to
 
 <div style="page-break-after: always;"></div>
 
-## Task 1: Database set up
+## Task 1: Database setup
 
 The data we are handling is historical, and therefore very unlikely to be altered (unless of course some new data was discovered in a dusty filing cabinet in a rarely visited hospital wing). It was, therefore, possible to treat the data as effectively static.
 
@@ -28,7 +28,7 @@ With this in mind, I wanted to create an isolated and automated (where possible)
 
 A full description of the process is listed in Appendix 1. In addition, you can find a summary of the process below.
 
-For the reasons outlined above (isolated, replicable, and automated), I created a virtual server using Vagrant *(Vagrant by Hashicorp (2017))* running Ubuntu 14.04 *Ubuntu 14.04.5 LTS (2017)*. I then set up a LAMP server *(LAMP (software bundle) - Wikipedia (2017))* and installed phpmyadmin *(How to install phpmyadmin on ubuntu - Liquid Web (2017))* to give me GUI access to the MySQL server from the host machine.
+For the reasons outlined above (isolated, replicable, and automated), I created a virtual server using Vagrant *(Vagrant by Hashicorp (2017))* running Ubuntu 14.04 *Ubuntu 14.04.5 LTS (2017)*. I then set up a LAMP server *(LAMP (software bundle) - Wikipedia (2017))* and installed PHPMyAdmin *(How to install PHPMyAdmin on Ubuntu - Liquid Web (2017))* to give me GUI access to the MySQL server from the host machine.
 
 Analysis of the data, lead to a simple strategy for structuring the database tables:
 
@@ -49,20 +49,20 @@ INCLUDE TABLES
 
 # Task 2: Data upload
 
-Having set up the database, I decided to continue using SQL Alchemy to parse the requisite csv files and populate the database.
+Having set up the database, I decided to continue using SQL Alchemy to parse the requisite CSV files and populate the database.
 
 This extra layer of abstraction allowed me to merge spreadsheets separated by month and, where appropriate, ignore duplicates. For instance, the two files that listed all GPs in the UK were more than 99% duplicated. This lead to the creation of the `populate_db.py` script (see Appendix 4).
 
 The one great drawback of this approach was the time taken to run the `populate_db.py` script. It took over 8 hours!! to complete the process of populating the tables with data. This is for a number of reasons:
 1. **The sheer scale of the data:**
-    * Two of the csv files where 1.4GB.
+    * Two of the CSV files where 1.4GB.
     * The final database contained c. 18 million rows.
 2. **Limited hardware resources**
-    *  The virtual mysql server only had access to 512MB of ram on the host machine.
+    *  The virtual MySQL server only had access to 512MB of ram on the host machine.
 3. **The extra cost of using an ORM tool:**
     * SQL Alchemy added an extra layer of abstraction.
 4. **Some data integrity vs speed trade-offs in the `populate_db.py` code**:
-    * For instance, the `session.commit()` command, which commits changes to the database, is run after every line in the csv file is parsed. This could have been run only at the end of the file, or after *x* lines are parsed, to reduce the number of commits and therefore execution time. However, this would create a risk of data loss, if the program terminated before reaching the end of the file or *x* lines.
+    * For instance, the `session.commit()` command, which commits changes to the database, is run after every line in the CSV file is parsed. This could have been run only at the end of the file, or after *x* lines are parsed, to reduce the number of commits and therefore execution time. However, this would create a risk of data loss, if the program terminated before reaching the end of the file or *x* lines.
 
 Despite this huge time delay, this process provided a reliable, automated, and replicable means of populating the databases.
 
@@ -112,7 +112,7 @@ Burrswood Nursing home.
 
 ### Queries
 
-This question requires a definition of "beta-blockers". In lieu of genuine medical expertise, a list was found on the NHS choices website *(Beta-blockers - NHS Choices (2017))*.
+This question requires a definition of "beta-blockers". In lieu of genuine medical expertise, a list was found on the NHS Choices website *(Beta-blockers - NHS Choices (2017))*.
 
 The term "prescribed the most" also requires some consideration. If we are counting the number of times a doctor issues a prescription, we should look at the 'items' column. If we were looking at the sheer amount of drugs that was given to patients, we should look at 'quantity'. I felt focusing on the sum of 'items' would best reflect the question.
 
@@ -201,7 +201,7 @@ LIMIT 1;
 1 row in set (26.55 sec)
 ```
 
-However a BNF code describes a particular drug at particular dosage and in a particular form. This seemed too narrow, as the same drug, when prescribed in different forms and at quantities, is counted separately.
+However, a BNF code describes a particular drug at a particular dosage and in a particular form. This seemed too narrow, as the same drug, when prescribed in different forms and at quantities, is counted separately.
 
 For this reason, and after looking at the Chemical table, I decided the look at the first 9 characters of the BNF code. This seemed to reflect the drug genus, as opposed to exact name and dosage. For example:
 
@@ -451,7 +451,7 @@ Enforcing more structure on such a large data set would allow for relationships 
 
 The GP Practice ID (e.g. "M85063") is a key identifier that could be used a primary / foreign key to link the Surgery, Surgery_data, and Treatment tables together. This would also avoid duplicating data, such as the appearance of the postcode in the Surgery and the Surgery_data tables.
 
-The Chemicals table and the Treatment table could also be linked using the chemical_sub_code as a primary / foreign key. This link would render the repeated (and somewhat clunky) use of the "SELECT **LEFT(bnf_code,9)** FROM etc.." in the queries above redundant. It would therefore make it much easier to identify the prescription drugs that belong to same chemical genus, but have distinct names for branding, legal, or other reasons.
+The Chemicals table and the Treatment table could also be linked using the chemical_sub_code as a primary / foreign key. This link would render the repeated (and somewhat clunky) use of the "SELECT **LEFT(bnf_code,9)** FROM etc.." in the queries above redundant. It would, therefore, make it much easier to identify the prescription drugs that belong to the same chemical genus, but have distinct names for branding, legal, or other reasons.
 
 Attempts to build this relational structure were frustrated by inconsistencies in the data, showing how important it is to institute these policies before users input data, and enforcing them with validation. For instance, there were discrepancies in the practice ids in the surgery and surgery_data table (both had 7 GP practices in N17 but only 6 were identical).
 
@@ -469,7 +469,7 @@ Attempts to build this relational structure were frustrated by inconsistencies i
 +--------------------+--------------------+
 ```
 
-There is also a danger in non-subject specialists (i.e. me) making these sorts of decisions. For instance, the assumption that bnf_codes in the Treatments table could be link those in the Chemical table is not supported by medical expertise. This further highlights the utility of making these decisions in the design phase, where expert advice can be sought.
+There is also a danger in non-subject specialists (i.e. me) making these sorts of decisions. For instance, the assumption that bnf_codes in the Treatments table could be linked to those in the Chemical table is not supported by medical expertise. This further highlights the utility of making these decisions in the design phase, where expert advice can be sought.
 
 <div style="page-break-after: always;"></div>
 
